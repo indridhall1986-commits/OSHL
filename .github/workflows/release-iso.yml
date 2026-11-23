@@ -8,8 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       run_id:
-        description: "ID do build 'ISO OSHL' (numero no fim da URL)"
-        required: true
+        description: "ID do build 'ISO OSHL' (deixe vazio = ISO mais recente)"
+        required: false
+        default: ""
   workflow_call:
     inputs:
       run_id:
@@ -29,10 +30,26 @@ jobs:
         with:
           tool-cache: true
 
+      - name: Descobrir build da ISO
+        id: run
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_RUN: ${{ inputs.run_id }}
+        run: |
+          RUN_ID="$(echo "$INPUT_RUN" | tr -dc '0-9')"
+          if [ -z "$RUN_ID" ]; then
+            RUN_ID=$(gh run list -R "$GITHUB_REPOSITORY" --workflow iso.yml --status success \
+                     --limit 1 --json databaseId -q '.[0].databaseId')
+          fi
+          [ -n "$RUN_ID" ] || { echo "Nenhum build de ISO bem-sucedido encontrado"; exit 1; }
+          echo "Usando o build $RUN_ID"
+          echo "id=$RUN_ID" >> "$GITHUB_OUTPUT"
+
       - name: Baixar ISO do build
         uses: actions/download-artifact@v4
         with:
-          run-id: ${{ inputs.run_id }}
+          run-id: ${{ steps.run.outputs.id }}
           github-token: ${{ github.token }}
           path: iso
           merge-multiple: true
@@ -41,7 +58,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          RUN_ID: ${{ inputs.run_id }}
+          RUN_ID: ${{ steps.run.outputs.id }}
         run: |
           cd iso
           ISO=$(ls OSHL-*.iso)
