@@ -1,0 +1,73 @@
+# Publica a ISO de um build "ISO OSHL" como Release do GitHub (download rapido via CDN).
+# A ISO e dividida em partes de 1,9 GB (limite de 2 GB por arquivo de Release).
+# Manual: Actions > "Publicar ISO" > Run workflow > informe o ID do build da ISO
+# (numero no fim da URL do build, ex.: .../actions/runs/45231017431).
+name: Publicar ISO
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "ID do build 'ISO OSHL' (numero no fim da URL)"
+        required: true
+  workflow_call:
+    inputs:
+      run_id:
+        type: string
+        required: true
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Liberar espaco em disco
+        uses: jlumbroso/free-disk-space@ceedf095f4ec1a097402bc6bd80831f2e1a6fde6 # v2.0.0
+        with:
+          tool-cache: true
+
+      - name: Baixar ISO do build
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+          path: iso
+          merge-multiple: true
+
+      - name: Conferir, dividir e publicar
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.run_id }}
+        run: |
+          cd iso
+          ISO=$(ls OSHL-*.iso)
+          NAME="${ISO%.iso}"
+          sha256sum -c "$ISO.sha256"
+          split -b 1900M -d -a 2 "$ISO" "$ISO.part"
+          rm "$ISO"
+          ls -lh
+
+          TAG="iso-${NAME#OSHL-}-$RUN_ID"
+          cat > notes.md <<EOF
+          ISO live/instaladora do OSHL. Baixe **todas** as partes \`.partNN\` e o \`.sha256\`.
+
+          Juntar no Windows (Prompt de Comando, na pasta dos arquivos):
+          \`\`\`
+          copy /b ${ISO}.part* ${ISO}
+          \`\`\`
+          Conferir (PowerShell): \`Get-FileHash .\\${ISO}\` deve bater com o \`.sha256\`.
+          EOF
+          sed -i 's/^          //' notes.md
+
+          gh release create "$TAG" -R "$GITHUB_REPOSITORY" \
+            --title "$NAME" --notes-file notes.md \
+            "$ISO".part* "$ISO.sha256"
+
+          # Mantem so a ISO mais recente (cada uma ocupa ~10 GB)
+          gh release list -R "$GITHUB_REPOSITORY" --limit 100 --json tagName -q '.[].tagName' \
+            | grep '^iso-' | grep -vx "$TAG" \
+            | xargs -r -I{} gh release delete {} -R "$GITHUB_REPOSITORY" --yes --cleanup-tag

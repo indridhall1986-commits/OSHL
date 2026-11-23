@@ -99,3 +99,13 @@ jobs:
           if-no-files-found: error
           compression-level: 0
           retention-days: 3
+
+  # Publica como Release (download rapido). O artifact acima e lento para baixar.
+  publicar:
+    needs: iso
+    permissions:
+      contents: write
+      actions: read
+    uses: ./.github/workflows/release-iso.yml
+    with:
+      run_id: ${{ github.run_id }}
