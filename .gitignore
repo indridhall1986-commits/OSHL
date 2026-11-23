@@ -1,2 +1,4 @@
 output/
 *.iso
+__pycache__/
+*.pyc
