@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Troca o tema do OSHL: painel HUD, cores das janelas, terminal e papel de parede.
+# Uso: oshl-temas            (abre a janela de escolha)
+#      oshl-temas <tema>     (aplica direto: tron, matrix, reator, alerta, ambar, neon)
+set -u
+
+THEMES=/usr/share/oshl/themes.json
+CONF="${XDG_CONFIG_HOME:-$HOME/.config}/oshl"
+CUR=$(cat "$CONF/theme" 2>/dev/null || echo tron)
+SEL="${1:-}"
+
+if [ -z "$SEL" ]; then
+    ARGS=()
+    while IFS=$'\t' read -r key name desc; do
+        state=off
+        [ "$key" = "$CUR" ] && state=on
+        ARGS+=("$key" "$name  -  $desc" "$state")
+    done < <(python3 -c 'import json,sys
+for k, v in json.load(open(sys.argv[1], encoding="utf-8")).items():
+    print(k, v["name"], v["desc"], sep="\t")' "$THEMES")
+    SEL=$(kdialog --title "Temas OSHL" --geometry 520x320 \
+        --radiolist "Escolha o visual do OSHL:" "${ARGS[@]}") || exit 0
+fi
+
+NAME=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))[sys.argv[2]]["name"])' "$THEMES" "$SEL" 2>/dev/null) || {
+    kdialog --error "Tema desconhecido: $SEL"
+    exit 1
+}
+CAP="${SEL^}"
+
+mkdir -p "$CONF"
+echo "$SEL" > "$CONF/theme"
+
+# Cores das janelas e paineis
+plasma-apply-colorscheme "OSHL$CAP" >/dev/null 2>&1
+
+# Papel de parede
+plasma-apply-wallpaperimage "/usr/share/wallpapers/OSHL-$SEL/contents/images/3840x2160.svg" >/dev/null 2>&1
+
+# Terminal (Konsole): copia do perfil do usuario com o esquema do tema
+PROF_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/konsole"
+mkdir -p "$PROF_DIR"
+[ -f "$PROF_DIR/OSHL.profile" ] || cp /usr/share/konsole/OSHL.profile "$PROF_DIR/OSHL.profile"
+kwriteconfig6 --file "$PROF_DIR/OSHL.profile" --group Appearance --key ColorScheme "OSHL$CAP"
+
+notify-send -a "OSHL" -i oshl-temas "Tema $NAME aplicado" \
+    "O painel atualiza em 1 segundo. Novas janelas do terminal ja usam as cores novas." 2>/dev/null || true

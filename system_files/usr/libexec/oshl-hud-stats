@@ -1,0 +1,219 @@
+#!/usr/bin/python3
+"""Coleta dados do sistema para o painel OSHL HUD.
+Chamado 1x por segundo pelo widget; imprime um JSON.
+Guarda o estado anterior em $XDG_RUNTIME_DIR para calcular taxas (CPU, rede, disco)."""
+import fcntl
+import glob
+import json
+import os
+import re
+import socket
+import struct
+import subprocess
+import time
+
+RUN = os.environ.get("XDG_RUNTIME_DIR") or "/tmp"
+STATE = os.path.join(RUN, "oshl-hud-state.json")
+CONF = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
+THEME_FILE = os.path.join(CONF, "oshl", "theme")
+THEMES = "/usr/share/oshl/themes.json"
+CLK = os.sysconf("SC_CLK_TCK")
+PAGE = os.sysconf("SC_PAGE_SIZE")
+DISK_RE = re.compile(r"nvme\d+n\d+|sd[a-z]+|vd[a-z]+")
+
+
+def rd(path, default=""):
+    try:
+        with open(path, encoding="utf-8", errors="replace") as f:
+            return f.read()
+    except OSError:
+        return default
+
+
+try:
+    st = json.loads(rd(STATE, "{}"))
+except ValueError:
+    st = {}
+now = time.time()
+dt = now - st.get("t", 0)
+fresh = 0.2 < dt < 30
+new = {"t": now}
+out = {}
+
+# ---------- CPU ----------
+prev_cpu, cpu_new, cores, total = st.get("cpu", {}), {}, [], 0.0
+for line in rd("/proc/stat").splitlines():
+    if not line.startswith("cpu"):
+        continue
+    p = line.split()
+    v = [int(x) for x in p[1:9]]
+    tot, idle = sum(v), v[3] + v[4]
+    cpu_new[p[0]] = [tot, idle]
+    pct, pr = 0.0, prev_cpu.get(p[0])
+    if fresh and pr and tot > pr[0]:
+        pct = max(0.0, min(100.0, 100.0 * (1 - (idle - pr[1]) / (tot - pr[0]))))
+    if p[0] == "cpu":
+        total = pct
+    else:
+        cores.append(round(pct, 1))
+new["cpu"] = cpu_new
+
+model = st.get("model")
+if not model:
+    for line in rd("/proc/cpuinfo").splitlines():
+        if line.startswith("model name"):
+            model = line.split(":", 1)[1].strip()
+            break
+    model = model or "CPU"
+new["model"] = model
+
+temp = None
+for d in glob.glob("/sys/class/hwmon/hwmon*"):
+    if rd(d + "/name").strip() in ("coretemp", "k10temp", "zenpower"):
+        vals = [int(rd(f, "0").strip() or 0) / 1000 for f in glob.glob(d + "/temp*_input")]
+        if vals:
+            temp = round(max(vals))
+out["cpu"] = {"total": round(total, 1), "cores": cores, "model": model, "temp": temp}
+
+# ---------- Memoria ----------
+mi = {}
+for line in rd("/proc/meminfo").splitlines():
+    k, _, v = line.partition(":")
+    parts = v.split()
+    if parts:
+        mi[k] = int(parts[0]) * 1024
+mt = mi.get("MemTotal", 1)
+used = mt - mi.get("MemAvailable", 0)
+swt = mi.get("SwapTotal", 0)
+out["mem"] = {"total": mt, "used": used, "pct": round(100 * used / mt, 1),
+              "swapTotal": swt, "swapUsed": swt - mi.get("SwapFree", 0)}
+
+# ---------- Processos ----------
+prev_p, new_p, procs, threads, running = st.get("procs", {}), {}, [], 0, 0
+for pid in os.listdir("/proc"):
+    if not pid.isdigit():
+        continue
+    s = rd(f"/proc/{pid}/stat")
+    r = s.rfind(")")
+    if r < 0:
+        continue
+    comm = s[s.find("(") + 1:r]
+    f = s[r + 2:].split()
+    if len(f) < 22:
+        continue
+    ticks = int(f[11]) + int(f[12])
+    threads += int(f[17])
+    running += f[0] == "R"
+    new_p[pid] = ticks
+    cpu = (ticks - prev_p[pid]) / CLK / dt * 100 if fresh and pid in prev_p else 0.0
+    procs.append((max(cpu, 0.0), int(f[21]) * PAGE, int(pid), comm))
+new["procs"] = new_p
+procs.sort(key=lambda x: (x[0], x[1]), reverse=True)
+out["procs"] = [{"pid": p[2], "name": p[3][:16], "cpu": round(p[0], 1),
+                 "mem": round(100 * p[1] / mt, 1)} for p in procs[:8]]
+out["tasks"], out["threads"], out["running"] = len(new_p), threads, running
+
+la = rd("/proc/loadavg").split()
+out["load"] = la[:3] if len(la) >= 3 else ["0", "0", "0"]
+out["uptime"] = int(float((rd("/proc/uptime") or "0").split()[0]))
+
+# ---------- Rede ----------
+rx = tx = 0
+for line in rd("/proc/net/dev").splitlines()[2:]:
+    name, _, data = line.partition(":")
+    v = data.split()
+    if name.strip() == "lo" or len(v) < 9:
+        continue
+    rx += int(v[0])
+    tx += int(v[8])
+pn = st.get("net")
+rxr = max(0.0, (rx - pn[0]) / dt) if fresh and pn else 0.0
+txr = max(0.0, (tx - pn[1]) / dt) if fresh and pn else 0.0
+new["net"] = [rx, tx]
+iface = None
+for line in rd("/proc/net/route").splitlines()[1:]:
+    p = line.split()
+    if len(p) > 2 and p[1] == "00000000":
+        iface = p[0]
+        break
+ip = "-"
+if iface:
+    try:
+        sk = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        ip = socket.inet_ntoa(fcntl.ioctl(sk.fileno(), 0x8915,
+                                          struct.pack("256s", iface[:15].encode()))[20:24])
+        sk.close()
+    except OSError:
+        pass
+out["net"] = {"rx": rxr, "tx": txr, "rxTotal": rx, "txTotal": tx,
+              "iface": iface or "-", "ip": ip, "online": bool(iface)}
+
+# ---------- Disco ----------
+try:
+    sv = os.statvfs("/var")
+    dtot, dfree = sv.f_blocks * sv.f_frsize, sv.f_bavail * sv.f_frsize
+except OSError:
+    dtot, dfree = 1, 0
+rs = ws = 0
+for line in rd("/proc/diskstats").splitlines():
+    p = line.split()
+    if len(p) > 9 and DISK_RE.fullmatch(p[2]):
+        rs += int(p[5])
+        ws += int(p[9])
+pd = st.get("disk")
+out["disk"] = {"total": dtot, "used": dtot - dfree, "pct": round(100 * (dtot - dfree) / max(dtot, 1), 1),
+               "read": max(0.0, (rs - pd[0]) * 512 / dt) if fresh and pd else 0.0,
+               "write": max(0.0, (ws - pd[1]) * 512 / dt) if fresh and pd else 0.0}
+new["disk"] = [rs, ws]
+
+# ---------- GPU NVIDIA (a cada 2 s) ----------
+gpu, gt = st.get("gpu"), st.get("gpu_t", 0)
+if now - gt >= 2:
+    gpu, gt = None, now
+    try:
+        r = subprocess.run(
+            ["nvidia-smi", "--query-gpu=utilization.gpu,temperature.gpu,memory.used,"
+             "memory.total,power.draw,name", "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=1.5)
+        if r.returncode == 0 and r.stdout.strip():
+            f = [x.strip() for x in r.stdout.splitlines()[0].split(",")]
+
+            def num(x):
+                try:
+                    return float(x)
+                except ValueError:
+                    return 0.0
+            gpu = {"util": num(f[0]), "temp": num(f[1]), "memUsed": num(f[2]),
+                   "memTotal": num(f[3]), "power": num(f[4]),
+                   "name": f[5].replace("NVIDIA ", "").replace("GeForce ", "")}
+    except (OSError, subprocess.SubprocessError, IndexError):
+        gpu = None
+new["gpu"], new["gpu_t"] = gpu, gt
+out["gpu"] = gpu
+
+# ---------- Diversos ----------
+bats = glob.glob("/sys/class/power_supply/BAT*/capacity")
+out["battery"] = int(rd(bats[0], "0").strip() or 0) if bats else None
+u = os.uname()
+out["info"] = {"host": u.nodename, "kernel": u.release.split("-")[0],
+               "user": os.environ.get("USER", "")}
+
+key = rd(THEME_FILE).strip() or "tron"
+try:
+    themes = json.loads(rd(THEMES, "{}"))
+except ValueError:
+    themes = {}
+th = themes.get(key) or themes.get("tron") or {}
+out["theme"] = key if key in themes else "tron"
+out["themeName"] = th.get("name", "TRON")
+out["palette"] = {k: th[k] for k in ("accent", "bright", "dim", "bg", "bg2", "alert") if k in th}
+
+try:
+    tmp = STATE + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(new, fh)
+    os.replace(tmp, STATE)
+except OSError:
+    pass
+
+print(json.dumps(out))

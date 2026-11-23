@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Roda uma vez no primeiro boot (com internet): apps Flatpak + grupo de audio.
-set -euo pipefail
+# Roda no boot ate concluir: grupo de audio, remove o Haruna, apps Flatpak (se houver internet).
+# Sem internet, as etapas locais sao feitas e os Flatpaks ficam para um boot com rede.
+set -uo pipefail
 
 # Usuarios administradores entram no grupo "audio" (prioridade de tempo real)
 grep -q '^audio:' /etc/group || grep '^audio:' /usr/lib/group >> /etc/group
@@ -8,10 +9,13 @@ for u in $(getent group wheel | cut -d: -f4 | tr ',' ' '); do
     usermod -aG audio "$u"
 done
 
-# Apps Flatpak
-flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-grep -vE '^\s*(#|$)' /usr/share/oshl/flatpaks.txt \
-    | xargs flatpak install --system -y --noninteractive flathub
+# O player de video e o "Video OSHL" (VLC); remove o Haruna copiado pelo instalador
+flatpak uninstall --system -y --noninteractive org.kde.haruna >/dev/null 2>&1 || true
+
+# Apps Flatpak (precisam de internet)
+flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo || exit 0
+grep -vE '^\s*(#|$)' /usr/share/oshl/flatpaks.txt | sed 's/\s*#.*//' \
+    | xargs flatpak install --system -y --noninteractive flathub || exit 0
 
 # Quarentena: o Bottles (programas .exe de origem desconhecida) nao enxerga
 # a pasta pessoal nem o sistema. So acessa ~/Quarentena.

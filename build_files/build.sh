@@ -24,6 +24,28 @@ dnf5 -y install --skip-unavailable \
 dnf5 -y install --skip-unavailable \
     mozilla-fira-mono-fonts mozilla-fira-sans-fonts
 
+# ---------- Apps embutidos (funcionam sem internet) ----------
+# Imagem (Krita, GIMP), captura/gravacao (Flameshot, OBS), video (VLC),
+# musica com espectro (Strawberry), dialogos dos scripts OSHL (kdialog).
+dnf5 -y install --skip-unavailable \
+    krita gimp flameshot obs-studio vlc strawberry kdialog
+
+# Musica: Strawberry vira "Musica OSHL" (icone proprio)
+for f in /usr/share/applications/org.strawberrymusicplayer.strawberry.desktop; do
+    [ -f "$f" ] || continue
+    sed -i -e '0,/^Name=/{s/^Name=.*/Name=Musica OSHL/}' -e '/^Name\[/d' \
+           -e 's/^Icon=.*/Icon=oshl-music/' "$f"
+done
+# Video: VLC vira "Video OSHL" (icone proprio, substitui o Haruna)
+for f in /usr/share/applications/vlc.desktop /usr/share/applications/org.videolan.vlc.desktop; do
+    [ -f "$f" ] || continue
+    sed -i -e '0,/^Name=/{s/^Name=.*/Name=Video OSHL/}' -e '/^Name\[/d' \
+           -e 's/^Icon=.*/Icon=oshl-video/' "$f"
+done
+
+# ---------- Temas OSHL (cores KDE, Konsole e papeis de parede) ----------
+python3 /ctx/gen-themes.py /
+
 # ---------- Audio profissional ----------
 dnf5 -y install \
     pipewire-jack-audio-connection-kit \
@@ -58,5 +80,6 @@ chmod +x /usr/bin/oshl-browser
 firewall-offline-cmd --set-default-zone=public
 
 # ---------- Servicos do OSHL ----------
-chmod +x /usr/libexec/oshl-firstboot
+chmod +x /usr/libexec/oshl-firstboot /usr/libexec/oshl-hud-stats \
+         /usr/bin/oshl-temas /usr/bin/oshl-atualizar
 systemctl enable oshl-firstboot.service

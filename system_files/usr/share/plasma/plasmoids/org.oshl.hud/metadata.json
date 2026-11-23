@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "OSHL" }],
+        "Category": "System Information",
+        "Description": "Painel de monitoramento sci-fi do OSHL (CPU, RAM, GPU, rede, processos)",
+        "Icon": "utilities-system-monitor",
+        "Id": "org.oshl.hud",
+        "License": "GPL-2.0+",
+        "Name": "OSHL HUD",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

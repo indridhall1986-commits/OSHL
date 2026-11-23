@@ -1,0 +1,38 @@
+{
+  "tron": {
+    "name": "TRON",
+    "desc": "Ciano sobre preto, estilo terminal sci-fi",
+    "accent": "#aacfd1", "bright": "#e6fbff", "dim": "#24383c",
+    "bg": "#05080d", "bg2": "#0a1117", "alert": "#ff5c5c"
+  },
+  "matrix": {
+    "name": "MATRIZ",
+    "desc": "Verde neon, estilo monitor de fosforo",
+    "accent": "#a6f04a", "bright": "#eaffd0", "dim": "#263a12",
+    "bg": "#030602", "bg2": "#081005", "alert": "#ff4f4f"
+  },
+  "reator": {
+    "name": "REATOR",
+    "desc": "Azul eletrico brilhante, painel de energia",
+    "accent": "#38d9ff", "bright": "#d8f7ff", "dim": "#0f3443",
+    "bg": "#02060b", "bg2": "#06121c", "alert": "#ff6b3d"
+  },
+  "alerta": {
+    "name": "ALERTA",
+    "desc": "Vermelho de emergencia, modo combate",
+    "accent": "#ff4a4a", "bright": "#ffd9d9", "dim": "#441111",
+    "bg": "#090202", "bg2": "#140505", "alert": "#ffd24a"
+  },
+  "ambar": {
+    "name": "AMBAR",
+    "desc": "Laranja ambar, terminal retro dos anos 80",
+    "accent": "#ffb000", "bright": "#fff0c8", "dim": "#433000",
+    "bg": "#080600", "bg2": "#120d02", "alert": "#ff5c5c"
+  },
+  "neon": {
+    "name": "NEON",
+    "desc": "Magenta e roxo, cidade cyberpunk",
+    "accent": "#e05cff", "bright": "#f8e0ff", "dim": "#3a1446",
+    "bg": "#07030a", "bg2": "#110718", "alert": "#ffd24a"
+  }
+}

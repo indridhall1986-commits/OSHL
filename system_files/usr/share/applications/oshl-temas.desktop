@@ -1,0 +1,33 @@
+[Desktop Entry]
+Type=Application
+Name=Temas OSHL
+Comment=Trocar o visual do OSHL (painel, cores, terminal e papel de parede)
+Exec=oshl-temas
+Icon=oshl-temas
+Categories=Settings;DesktopSettings;
+Terminal=false
+Actions=tron;matrix;reator;alerta;ambar;neon;
+
+[Desktop Action tron]
+Name=TRON (ciano)
+Exec=oshl-temas tron
+
+[Desktop Action matrix]
+Name=MATRIZ (verde)
+Exec=oshl-temas matrix
+
+[Desktop Action reator]
+Name=REATOR (azul)
+Exec=oshl-temas reator
+
+[Desktop Action alerta]
+Name=ALERTA (vermelho)
+Exec=oshl-temas alerta
+
+[Desktop Action ambar]
+Name=AMBAR (laranja)
+Exec=oshl-temas ambar
+
+[Desktop Action neon]
+Name=NEON (magenta)
+Exec=oshl-temas neon

@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# Atualiza o OSHL a partir de um pendrive (sem internet).
+# No pendrive: os arquivos oshl-atualizacao-AAAAMMDD.ociarchive.partNN e .sha256
+# (em qualquer pasta). Basta conectar o pendrive e abrir "Atualizar OSHL".
+set -euo pipefail
+
+# Abre num terminal para mostrar o progresso
+if [ ! -t 1 ]; then
+    exec konsole --hide-menubar -p tabtitle="Atualizar OSHL" -e "$0" "$@"
+fi
+
+pause() { echo; read -r -p "Pressione Enter para fechar..." _; }
+fail() { echo; echo "ERRO: $*"; pause; exit 1; }
+
+echo "=== OSHL // ATUALIZACAO POR PENDRIVE ==="
+echo
+echo "Procurando pacote de atualizacao nos pendrives..."
+FIRST=$(find "/run/media/$USER" -maxdepth 3 -name 'oshl-atualizacao-*.ociarchive.part00' 2>/dev/null | sort | tail -n 1)
+[ -n "$FIRST" ] || fail "Nenhum pacote encontrado. Conecte o pendrive com os arquivos oshl-atualizacao-*.part00, .part01... e o .sha256."
+
+DIR=$(dirname "$FIRST")
+BASE=$(basename "$FIRST" .part00)          # oshl-atualizacao-AAAAMMDD.ociarchive
+NAME="${BASE%.ociarchive}"                  # oshl-atualizacao-AAAAMMDD
+SUM="$DIR/$NAME.sha256"
+[ -f "$SUM" ] || fail "Arquivo $NAME.sha256 nao encontrado no pendrive."
+
+echo "Encontrado: $NAME"
+echo "Pasta: $DIR"
+ls "$DIR/$BASE".part* | sed 's/^/  /'
+echo
+read -r -p "Instalar esta atualizacao? [s/N] " ok
+[[ "$ok" =~ ^[sS] ]] || { echo "Cancelado."; pause; exit 0; }
+
+WORK=/var/tmp/oshl-atualizacao
+NEED=$(du -cb "$DIR/$BASE".part* | tail -n 1 | cut -f1)
+FREE=$(df --output=avail -B1 /var/tmp | tail -n 1)
+[ "$FREE" -gt $((NEED + 1073741824)) ] || fail "Espaco insuficiente em disco (precisa de $((NEED / 1073741824 + 1)) GB livres)."
+
+rm -rf "$WORK"
+mkdir -p "$WORK"
+trap 'rm -rf "$WORK"' EXIT
+
+echo
+echo "[1/3] Copiando do pendrive (alguns minutos)..."
+cat "$DIR/$BASE".part* > "$WORK/$BASE"
+
+echo "[2/3] Conferindo integridade..."
+( cd "$WORK" && sha256sum -c "$SUM" ) || fail "Arquivo corrompido. Copie o pacote para o pendrive novamente."
+
+echo "[3/3] Aplicando atualizacao (sera pedida a sua senha)..."
+pkexec bootc switch --transport oci-archive "$WORK/$BASE" || fail "Falha ao aplicar a atualizacao."
+
+echo
+echo "Atualizacao instalada. Ela vale a partir do proximo reinicio."
+echo "Se algo der errado, escolha a versao anterior no menu de boot."
+echo
+read -r -p "Reiniciar agora? [s/N] " rb
+if [[ "$rb" =~ ^[sS] ]]; then
+    rm -rf "$WORK"
+    systemctl reboot
+fi

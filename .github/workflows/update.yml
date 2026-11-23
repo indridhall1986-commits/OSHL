@@ -1,0 +1,56 @@
+# Gera o PACOTE DE ATUALIZACAO por pendrive (para o OSHL sem internet).
+# Manual: Actions > "Pacote de atualizacao" > Run workflow.
+# Resultado: Release "atualizacao-AAAAMMDD" com partes de 1,9 GB + .sha256 + LEIA-ME.
+# No OSHL: copie os arquivos para um pendrive, conecte e abra "Atualizar OSHL".
+name: Pacote de atualizacao
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: read
+
+jobs:
+  pacote:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Liberar espaco em disco
+        uses: jlumbroso/free-disk-space@ceedf095f4ec1a097402bc6bd80831f2e1a6fde6 # v2.0.0
+        with:
+          tool-cache: true
+
+      - name: Exportar imagem, dividir e publicar
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/oshl:latest"
+          TAG=$(date -u +%Y%m%d)
+          NAME="oshl-atualizacao-$TAG"
+          mkdir -p pkg && cd pkg
+
+          skopeo copy "docker://$IMAGE" "oci-archive:$NAME.ociarchive"
+          sha256sum "$NAME.ociarchive" | tee "$NAME.sha256"
+          split -b 1900M -d -a 2 "$NAME.ociarchive" "$NAME.ociarchive.part"
+          rm "$NAME.ociarchive"
+
+          printf '%s\r\n' \
+            "ATUALIZACAO DO OSHL - $TAG" "" \
+            "1. Copie TODOS os arquivos desta pasta para um pendrive (qualquer formato)." \
+            "2. No OSHL, conecte o pendrive." \
+            "3. Clique em ATUALIZAR no painel (ou abra 'Atualizar OSHL' no menu)." \
+            "4. Digite sua senha quando pedir e reinicie no final." \
+            "" "Se algo der errado: no menu de boot escolha a versao anterior." > LEIA-ME.txt
+          ls -lh
+
+          REL="atualizacao-$TAG-$GITHUB_RUN_ID"
+          gh release create "$REL" -R "$GITHUB_REPOSITORY" \
+            --title "Atualizacao OSHL $TAG" \
+            --notes "Pacote de atualizacao por pendrive. Baixe todos os arquivos e siga o LEIA-ME.txt." \
+            ./*
+
+          # Mantem so o pacote mais recente
+          gh release list -R "$GITHUB_REPOSITORY" --limit 100 --json tagName -q '.[].tagName' \
+            | { grep '^atualizacao-' || true; } | { grep -vx "$REL" || true; } \
+            | xargs -r -I{} gh release delete {} -R "$GITHUB_REPOSITORY" --yes --cleanup-tag
