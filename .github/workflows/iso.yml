@@ -78,11 +78,18 @@ jobs:
           image-ref: localhost/payload:latest
           iso-dest: ${{ github.workspace }}/upload/OSHL-${{ env.TAG }}.iso
 
-      - name: Checksum
+      - name: Mover ISO e gerar checksum
+        shell: bash
+        env:
+          ISO_SRC: ${{ steps.build.outputs.iso-dest }}
         run: |
-          cd upload
-          sha256sum OSHL-*.iso | tee "OSHL-$TAG.iso.sha256"
+          echo "ISO gerada em: $ISO_SRC"
+          mv "$ISO_SRC" "$GITHUB_WORKSPACE/upload/OSHL-$TAG.iso"
+          cd "$GITHUB_WORKSPACE/upload"
+          sha256sum "OSHL-$TAG.iso" | tee "OSHL-$TAG.iso.sha256"
           ls -lh
+          # Falha se a ISO for suspeitamente pequena (< 4 GB)
+          [ "$(stat -c %s "OSHL-$TAG.iso")" -gt 4000000000 ]
 
       - name: Disponibilizar ISO para download
         uses: actions/upload-artifact@v4
