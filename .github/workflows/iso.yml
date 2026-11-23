@@ -59,6 +59,7 @@ jobs:
         run: |
           echo "PAYLOAD=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/oshl:latest" >> "$GITHUB_ENV"
           echo "TAG=$(date -u +%Y%m%d)" >> "$GITHUB_ENV"
+          mkdir -p "$GITHUB_WORKSPACE/upload"
 
       - name: Montar ambiente live com o instalador
         run: |
@@ -75,7 +76,7 @@ jobs:
         uses: ublue-os/titanoboa@5c457c3d0518bd17e754be0fd98a60d29d26abb4
         with:
           image-ref: localhost/payload:latest
-          iso-dest: upload/OSHL-${{ env.TAG }}.iso
+          iso-dest: ${{ github.workspace }}/upload/OSHL-${{ env.TAG }}.iso
 
       - name: Checksum
         run: |
