@@ -86,5 +86,5 @@ jobs:
 
           # Mantem so a ISO mais recente (cada uma ocupa ~10 GB)
           gh release list -R "$GITHUB_REPOSITORY" --limit 100 --json tagName -q '.[].tagName' \
-            | grep '^iso-' | grep -vx "$TAG" \
+            | { grep '^iso-' || true; } | { grep -vx "$TAG" || true; } \
             | xargs -r -I{} gh release delete {} -R "$GITHUB_REPOSITORY" --yes --cleanup-tag
