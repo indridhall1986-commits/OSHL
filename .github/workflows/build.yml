@@ -26,7 +26,7 @@ jobs:
           sudo docker system prune -af || true
           df -h /
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Definir nome e tag
         run: |
