@@ -71,8 +71,10 @@ producao musical (Reaper + VST3 do Windows via yabridge) e multimidia.
 
 1. **Maquina virtual primeiro** (Hyper-V Geracao 2 ou VirtualBox com EFI): 4 nucleos, 8 GB RAM, 64 GB disco.
 2. **Pendrive** (16 GB+): grave com **Fedora Media Writer** (opcao "Selecionar arquivo .iso").
-3. Boot pelo pendrive (F11/F12/F8 no menu de boot da placa-mae) > instalador.
-4. Em "Destino da instalacao", escolha **somente o SSD do OSHL**.
+3. Boot pelo pendrive (F11/F12/F8 no menu de boot da placa-mae). A ISO e **live**: o sistema
+   abre direto do pendrive (sem instalar nada) e o instalador fica na area de trabalho.
+   O ambiente live usa driver de video generico; o driver NVIDIA vem no sistema instalado.
+4. No instalador, em "Destino da instalacao", escolha **somente o SSD do OSHL**.
 5. Primeiro boot: tela azul "MOK management" > *Enroll MOK* > senha `universalblue` (libera o driver NVIDIA com Secure Boot).
 6. Para alternar com o Windows: menu de boot da placa-mae, ou defina a ordem na BIOS.
 

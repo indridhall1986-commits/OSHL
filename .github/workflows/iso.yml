@@ -1,4 +1,6 @@
-# Gera a ISO instaladora a partir da imagem publicada.
+# Gera a ISO LIVE do OSHL (mesmo processo do Bazzite: Titanoboa).
+# O pendrive inicia um ambiente live com o instalador; o sistema instalado
+# e a imagem ghcr.io/<usuario>/oshl:latest e recebe atualizacoes dela.
 # Rodar manualmente: aba Actions > "ISO OSHL" > Run workflow.
 name: ISO OSHL
 
@@ -7,51 +9,85 @@ on:
 
 permissions:
   contents: read
-  packages: read
+
+env:
+  # Versao fixa do instalador do Bazzite (atualize quando quiser as novidades deles)
+  BAZZITE_REF: 264aca11a6bf3dfa2ab68c98315268a65ab9618b
 
 jobs:
   iso:
     runs-on: ubuntu-24.04
     steps:
       - name: Liberar espaco em disco
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
-                      /opt/hostedtoolcache/CodeQL /usr/local/share/boost
-          sudo docker system prune -af || true
-          df -h /
+        uses: jlumbroso/free-disk-space@ceedf095f4ec1a097402bc6bd80831f2e1a6fde6 # v2.0.0
+        with:
+          tool-cache: true
 
-      - uses: actions/checkout@v5
-
-      - name: Definir nome
+      - name: Armazenamento extra para containers
         run: |
-          echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/oshl:latest" >> "$GITHUB_ENV"
+          sudo truncate -s 110G /mnt/podman-storage.img
+          sudo mkfs.btrfs -f -m single -d single /mnt/podman-storage.img
+          sudo podman system reset --force
+          sudo systemctl stop podman.service || true
+          LOOP=$(sudo losetup --find --show --direct-io=on /mnt/podman-storage.img)
+          sudo mkdir -p /mnt/podman-storage
+          sudo mount -o compress-force=zstd:2,discard=async,noatime "$LOOP" /mnt/podman-storage
+          sudo mkdir -p /mnt/podman-storage/storage /mnt/podman-storage/tmp
+          sudo mount --bind /mnt/podman-storage/storage /var/lib/containers/storage
+          sudo systemctl start podman.service || true
+
+      - name: Baixar instalador do Bazzite
+        uses: actions/checkout@v5
+        with:
+          repository: ublue-os/bazzite
+          ref: ${{ env.BAZZITE_REF }}
+          path: bazzite
+          sparse-checkout: installer
+
+      - name: Adaptar instalador para o OSHL
+        run: |
+          cd bazzite/installer
+          # Procurar a imagem "oshl" em vez de "bazzite*"
+          sed -i "s/'bazzite\*'/'oshl*'/" titanoboa_hook_postrootfs.sh titanoboa_hook_preinitramfs.sh
+          # Imagem do OSHL nao e assinada (cosign): nao exigir assinatura no bootc switch
+          sed -i 's/--enforce-container-sigpolicy //' titanoboa_hook_postrootfs.sh
+          # OSHL e sempre NVIDIA: aplicar os ajustes NVIDIA do instalador
+          sed -i 's/\*-nvidia\*/*/' titanoboa_hook_postrootfs.sh
+          grep -n "oshl\*" titanoboa_hook_postrootfs.sh titanoboa_hook_preinitramfs.sh
+
+      - name: Definir nomes
+        run: |
+          echo "PAYLOAD=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/oshl:latest" >> "$GITHUB_ENV"
           echo "TAG=$(date -u +%Y%m%d)" >> "$GITHUB_ENV"
 
-      - name: Baixar imagem do OSHL
+      - name: Montar ambiente live com o instalador
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | sudo podman login ghcr.io -u "${{ github.actor }}" --password-stdin
-          sudo podman pull "$IMAGE"
+          sudo env TMPDIR=/mnt/podman-storage/tmp podman build \
+            --cap-add sys_admin \
+            --security-opt label=disable \
+            --build-arg BASE_IMAGE=ghcr.io/ublue-os/bazzite:stable \
+            --build-arg INSTALL_IMAGE_PAYLOAD="$PAYLOAD" \
+            --build-arg FLATPAK_DIR_SHORTNAME=kde_flatpaks \
+            -t localhost/payload:latest bazzite/installer/
 
-      # A ISO aponta para a imagem do GHCR: o sistema instalado recebe atualizacoes dela.
       - name: Gerar ISO
+        id: build
+        uses: ublue-os/titanoboa@5c457c3d0518bd17e754be0fd98a60d29d26abb4
+        with:
+          image-ref: localhost/payload:latest
+          iso-dest: upload/OSHL-${{ env.TAG }}.iso
+
+      - name: Checksum
         run: |
-          mkdir -p output
-          sudo podman run --rm --privileged --pull=newer \
-            --security-opt label=type:unconfined_t \
-            -v ./output:/output \
-            -v ./iso.toml:/config.toml:ro \
-            -v /var/lib/containers/storage:/var/lib/containers/storage \
-            quay.io/centos-bootc/bootc-image-builder:latest \
-            --type anaconda-iso --rootfs btrfs \
-            "$IMAGE"
-          sudo mv output/bootiso/install.iso "output/OSHL-$TAG.iso"
-          sudo chown -R "$(id -u):$(id -g)" output
-          ls -lh output
+          cd upload
+          sha256sum OSHL-*.iso | tee "OSHL-$TAG.iso.sha256"
+          ls -lh
 
       - name: Disponibilizar ISO para download
         uses: actions/upload-artifact@v4
         with:
           name: OSHL-${{ env.TAG }}
-          path: output/OSHL-*.iso
+          path: upload/
+          if-no-files-found: error
           compression-level: 0
           retention-days: 3
