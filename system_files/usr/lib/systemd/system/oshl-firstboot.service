@@ -1,0 +1,14 @@
+[Unit]
+Description=OSHL - configuracao do primeiro boot (apps e audio)
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=!/var/lib/oshl/firstboot-ok
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/oshl-firstboot
+Restart=on-failure
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Name=Navegador OSHL
+GenericName=Navegador Web
+Comment=Navegador seguro do OSHL
+Exec=oshl-browser %u
+Icon=oshl-browser
+StartupWMClass=oshl-browser
+Categories=Network;WebBrowser;
+MimeType=text/html;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
+Terminal=false
+Actions=private;
+
+[Desktop Action private]
+Name=Nova janela privativa
+Exec=oshl-browser --private-window %u

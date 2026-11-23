@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Roda uma vez no primeiro boot (com internet): apps Flatpak + grupo de audio.
+set -euo pipefail
+
+# Usuarios administradores entram no grupo "audio" (prioridade de tempo real)
+grep -q '^audio:' /etc/group || grep '^audio:' /usr/lib/group >> /etc/group
+for u in $(getent group wheel | cut -d: -f4 | tr ',' ' '); do
+    usermod -aG audio "$u"
+done
+
+# Apps Flatpak
+flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+grep -vE '^\s*(#|$)' /usr/share/oshl/flatpaks.txt \
+    | xargs flatpak install --system -y --noninteractive flathub
+
+# Quarentena: o Bottles (programas .exe de origem desconhecida) nao enxerga
+# a pasta pessoal nem o sistema. So acessa ~/Quarentena.
+flatpak override --system \
+    --nofilesystem=home --nofilesystem=host --nofilesystem=xdg-download \
+    --filesystem=~/Quarentena:create \
+    com.usebottles.bottles
+
+mkdir -p /var/lib/oshl
+touch /var/lib/oshl/firstboot-ok

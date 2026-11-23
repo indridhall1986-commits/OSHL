@@ -1,0 +1,46 @@
+# Constroi a imagem do OSHL e publica no GitHub Container Registry.
+# Roda a cada alteracao e diariamente (pega driver NVIDIA / Bazzite / Firefox novos).
+# Os PCs com OSHL instalado se atualizam a partir desta imagem.
+name: Imagem OSHL
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["README.md"]
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Liberar espaco em disco
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          sudo docker system prune -af || true
+          df -h /
+
+      - uses: actions/checkout@v4
+
+      - name: Definir nome e tag
+        run: |
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/oshl"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+          echo "TAG=$(date -u +%Y%m%d)" >> "$GITHUB_ENV"
+
+      - name: Construir imagem
+        run: sudo podman build --pull=newer -t "$IMAGE:latest" -t "$IMAGE:$TAG" .
+
+      - name: Login no GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | sudo podman login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Publicar imagem
+        run: |
+          sudo podman push "$IMAGE:latest"
+          sudo podman push "$IMAGE:$TAG"

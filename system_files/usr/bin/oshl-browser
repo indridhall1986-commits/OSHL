@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Navegador OSHL: motor Firefox + perfil proprio, visual eDEX e politicas de seguranca
+# (as politicas ficam em /etc/firefox/policies/policies.json e nao podem ser desligadas).
+set -eu
+
+PROFILE="${XDG_DATA_HOME:-$HOME/.local/share}/oshl-browser/profile"
+mkdir -p "$PROFILE/chrome"
+chmod 700 "${PROFILE%/profile}" "$PROFILE"
+
+# Reaplica as configuracoes do OSHL a cada abertura
+install -m 600 /usr/share/oshl/browser/user.js        "$PROFILE/user.js"
+install -m 600 /usr/share/oshl/browser/userChrome.css "$PROFILE/chrome/userChrome.css"
+
+exec firefox --profile "$PROFILE" --name oshl-browser --class oshl-browser "$@"

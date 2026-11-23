@@ -1,0 +1,21 @@
+[General]
+ColorScheme=OSHLTron
+font=Fira Sans,10,-1,5,50,0,0,0,0,0
+menuFont=Fira Sans,10,-1,5,50,0,0,0,0,0
+toolBarFont=Fira Mono,9,-1,5,50,0,0,0,0,0
+smallestReadableFont=Fira Mono,8,-1,5,50,0,0,0,0,0
+fixed=Fira Mono,10,-1,5,50,0,0,0,0,0
+
+[WM]
+activeFont=Fira Mono,10,-1,5,50,0,0,0,0,0
+
+[Icons]
+Theme=breeze-dark
+
+[KDE]
+LookAndFeelPackage=org.oshl.tron
+widgetStyle=Breeze
+# Duplo clique para abrir arquivos, igual ao Windows
+SingleClick=false
+# Animacoes mais rapidas (interface mais responsiva)
+AnimationDurationFactor=0.5

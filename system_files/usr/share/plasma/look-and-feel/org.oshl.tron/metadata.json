@@ -1,0 +1,12 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [{ "Name": "OSHL" }],
+        "Category": "",
+        "Description": "Visual sci-fi do OSHL com navegacao no estilo Windows",
+        "Id": "org.oshl.tron",
+        "License": "GPL-2.0+",
+        "Name": "OSHL Tron",
+        "Version": "1.0"
+    }
+}

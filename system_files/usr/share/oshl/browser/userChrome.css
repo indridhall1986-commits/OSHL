@@ -1,0 +1,51 @@
+/* Navegador OSHL - visual estilo eDEX-UI */
+:root {
+  --oshl-bg: #05080d;
+  --oshl-surface: #0a1117;
+  --oshl-alt: #0e1820;
+  --oshl-fg: #aacfd1;
+  --oshl-dim: #5f7f83;
+  --oshl-accent: #7fe6ff;
+
+  --lwt-accent-color: var(--oshl-bg) !important;
+  --lwt-text-color: var(--oshl-fg) !important;
+  --toolbar-bgcolor: var(--oshl-surface) !important;
+  --toolbar-color: var(--oshl-fg) !important;
+  --tab-selected-bgcolor: var(--oshl-alt) !important;
+  --tab-selected-textcolor: var(--oshl-accent) !important;
+  --toolbar-field-background-color: var(--oshl-bg) !important;
+  --toolbar-field-color: var(--oshl-fg) !important;
+  --toolbar-field-focus-background-color: var(--oshl-bg) !important;
+  --toolbar-field-focus-border-color: var(--oshl-accent) !important;
+  --arrowpanel-background: var(--oshl-surface) !important;
+  --arrowpanel-color: var(--oshl-fg) !important;
+  --focus-outline-color: var(--oshl-accent) !important;
+}
+
+#navigator-toolbox,
+#TabsToolbar,
+#nav-bar,
+#urlbar,
+.tab-label,
+menupopup {
+  font-family: "Fira Mono", monospace !important;
+}
+
+#navigator-toolbox {
+  border-bottom: 1px solid var(--oshl-dim) !important;
+}
+
+.tabbrowser-tab[selected] .tab-background {
+  border-top: 2px solid var(--oshl-accent) !important;
+  box-shadow: 0 0 8px rgba(127, 230, 255, 0.25) !important;
+}
+
+#urlbar-background {
+  border: 1px solid var(--oshl-dim) !important;
+  border-radius: 2px !important;
+}
+
+#urlbar[focused] #urlbar-background {
+  border-color: var(--oshl-accent) !important;
+  box-shadow: 0 0 6px rgba(127, 230, 255, 0.35) !important;
+}

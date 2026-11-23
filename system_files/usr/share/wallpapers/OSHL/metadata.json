@@ -1,0 +1,8 @@
+{
+    "KPlugin": {
+        "Authors": [{ "Name": "OSHL" }],
+        "Id": "OSHL",
+        "License": "CC-BY-SA-4.0",
+        "Name": "OSHL Grid"
+    }
+}

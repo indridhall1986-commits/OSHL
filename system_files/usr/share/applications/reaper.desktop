@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=REAPER
+Comment=Estacao de trabalho de audio digital
+Exec=/usr/lib/REAPER/reaper %F
+Icon=/usr/lib/REAPER/Resources/main.png
+Categories=AudioVideo;Audio;Midi;
+Terminal=false

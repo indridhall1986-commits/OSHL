@@ -1,0 +1,3 @@
+# Desliga o indexador de arquivos (consome disco e CPU em segundo plano)
+[Basic Settings]
+Indexing-Enabled=false

@@ -1,0 +1,5 @@
+# Scripts e configs do Linux precisam de quebra de linha LF (nao CRLF do Windows)
+* text=auto eol=lf
+*.svg text eol=lf
+*.png binary
+*.iso binary

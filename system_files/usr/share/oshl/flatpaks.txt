@@ -1,0 +1,24 @@
+# Jogos
+com.heroicgameslauncher.hgl          # Epic, GOG, Amazon
+net.lutris.Lutris                    # Battle.net, EA, Ubisoft, outros
+net.davidotek.pupgui2                # ProtonUp-Qt: instala Proton-GE (mais compatibilidade)
+com.usebottles.bottles               # Rodar programas .exe do Windows
+
+# Imagem
+org.kde.krita
+org.gimp.GIMP
+
+# Captura de tela / gravacao (NVENC funciona com driver NVIDIA)
+com.obsproject.Studio
+org.flameshot.Flameshot
+
+# Musica e video
+org.videolan.VLC
+io.mpv.Mpv
+org.strawberrymusicplayer.strawberry
+
+# Utilitarios
+com.github.tchx84.Flatseal           # Permissoes dos apps
+
+# Focusrite Scarlett (substitui o Focusrite Control)
+# Se nao estiver no Flathub, instale o RPM: https://github.com/geoffreybennett/alsa-scarlett-gui

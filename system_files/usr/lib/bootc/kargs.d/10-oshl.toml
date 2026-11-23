@@ -1,0 +1,2 @@
+# Parametros de kernel para audio de baixa latencia
+kargs = ["preempt=full", "threadirqs"]

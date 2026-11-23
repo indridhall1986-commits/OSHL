@@ -1,0 +1,5 @@
+[Default Applications]
+text/html=oshl-browser.desktop
+application/xhtml+xml=oshl-browser.desktop
+x-scheme-handler/http=oshl-browser.desktop
+x-scheme-handler/https=oshl-browser.desktop
