@@ -1,0 +1,19 @@
+WINAMP + SKINS OSHL PLASTIC - INSTALACAO NO OSHL
+
+1. Copie esta pasta (WINAMP-OSHL) para a pasta Downloads do OSHL.
+2. Abra a pasta e aperte Shift+F4 (abre o terminal nela).
+3. Cole e tecle Enter:
+
+   bash instalar.sh
+
+4. Se o Winamp ainda nao estiver instalado, o instalador abre:
+   clique em Avancar/Next ate o fim (pode deixar tudo no padrao).
+5. Espere aparecer "PRONTO!".
+
+Depois disso:
+- Musicas abrem no Winamp com dois cliques.
+- O skin acompanha o tema do OSHL (botao TEMAS) na proxima vez que o Winamp abrir.
+- Trocar o skin manualmente:  oshl-winamp-tema neon
+  (tron, matrix, reator, alerta, ambar, neon)
+
+Pasta Skins: OSHL-Plastic-*.wal (6 temas) + skins de Xbox dos fas (.wal/.wsz).

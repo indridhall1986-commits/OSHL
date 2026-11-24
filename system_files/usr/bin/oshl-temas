@@ -43,5 +43,8 @@ mkdir -p "$PROF_DIR"
 [ -f "$PROF_DIR/OSHL.profile" ] || cp /usr/share/konsole/OSHL.profile "$PROF_DIR/OSHL.profile"
 kwriteconfig6 --file "$PROF_DIR/OSHL.profile" --group Appearance --key ColorScheme "OSHL$CAP"
 
+# Winamp (instalado pelo pacote WINAMP-OSHL): o skin acompanha o tema
+[ -x "$HOME/.local/bin/oshl-winamp-tema" ] && "$HOME/.local/bin/oshl-winamp-tema" "$SEL" >/dev/null 2>&1
+
 notify-send -a "OSHL" -i oshl-temas "Tema $NAME aplicado" \
     "O painel atualiza em 1 segundo. Novas janelas do terminal ja usam as cores novas." 2>/dev/null || true
