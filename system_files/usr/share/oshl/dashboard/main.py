@@ -17,6 +17,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ASSETS = os.environ.get("OSHL_ORBITAL", "/usr/share/oshl/orbital")
 THEMES = os.environ.get("OSHL_THEMES", "/usr/share/oshl/themes.json")
 FONT = os.environ.get("OSHL_FONT", "/usr/share/fonts/oshl/Orbitron.ttf")
+USER_SONS = os.environ.get("OSHL_SONS") or os.path.expanduser("~/.local/share/oshl/sons")
 CONF = os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"), "oshl")
 # Papeis de parede: os do sistema + a pasta do usuario (pacote WALLPAPERS-OSHL ou copiados a mao)
 USER_WALL = os.environ.get("OSHL_WALLPAPERS") or os.path.join(
@@ -231,7 +232,10 @@ class Backend(QObject):
 
     @Slot(str)
     def sound(self, name):
-        wav = os.path.join(ASSETS, name + ".wav")
+        # sons do usuario (pacote no pendrive) tem prioridade: ~/.local/share/oshl/sons/<nome>.wav
+        wav = os.path.join(USER_SONS, name + ".wav")
+        if not os.path.exists(wav):
+            wav = os.path.join(ASSETS, name + ".wav")
         if os.path.exists(wav) and os.name == "nt":          # teste no Windows
             import winsound
             winsound.PlaySound(wav, winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_NODEFAULT)
