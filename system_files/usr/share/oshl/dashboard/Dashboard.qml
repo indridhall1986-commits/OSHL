@@ -144,7 +144,7 @@ Window {
             Item {                           // papel de parede com "respiracao" lenta e troca suave (2 camadas)
                 id: bgHolder
                 anchors.centerIn: parent
-                width: parent.width * 1.12; height: parent.height * 1.12
+                width: parent.width; height: parent.height
                 property bool showA: true
                 function swap(url) {
                     var incoming = showA ? bgB : bgA
@@ -170,16 +170,6 @@ Window {
                     Behavior on opacity { NumberAnimation { duration: 900; easing.type: Easing.InOutQuad } }
                 }
                 Connections { target: backend; function onWallpaperChanged() { bgHolder.swap(backend.wallpaper) } }
-                SequentialAnimation on scale {
-                    loops: Animation.Infinite; running: !previewMode
-                    NumberAnimation { to: 1.06; duration: 14000; easing.type: Easing.InOutSine }
-                    NumberAnimation { to: 1.0; duration: 14000; easing.type: Easing.InOutSine }
-                }
-                SequentialAnimation on rotation {
-                    loops: Animation.Infinite; running: !previewMode
-                    NumberAnimation { to: 2.5; duration: 22000; easing.type: Easing.InOutSine }
-                    NumberAnimation { to: -2.5; duration: 22000; easing.type: Easing.InOutSine }
-                }
             }
             Rectangle { anchors.fill: parent; color: "black"; opacity: 0.38 }   // escurece o fundo
 
