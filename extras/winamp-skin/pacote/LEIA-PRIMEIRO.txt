@@ -1,0 +1,46 @@
+=====================================================================
+ WINAMP NO OSHL - INSTALACAO OFFLINE (SEM INTERNET)
+ Colar no terminal: Ctrl+Shift+V | um comando de cada vez
+=====================================================================
+
+1. Confira se a protecao esta ligada (deve responder Enforcing):
+
+getenforce
+
+   Se responder Permissive, religue:
+
+sudo setenforce 1
+
+2. Abra a pasta WINAMP-OSHL-PRONTO no gerenciador de arquivos,
+   aperte Shift+F4 e rode:
+
+bash instalar-offline.sh
+
+   Espere aparecer "PRONTO!" (o passo 2 pode levar 1 minuto).
+
+3. Abra o Winamp pelo menu Iniciar.
+
+4. Se NAO abrir, rode e tire uma foto das ultimas linhas:
+
+~/.local/bin/winamp
+
+---------------------------------------------------------------------
+ Uteis
+---------------------------------------------------------------------
+Trocar o skin (vale na proxima abertura do Winamp):
+
+~/.local/bin/oshl-winamp-tema neon
+
+   (tron, matrix, reator, alerta, ambar, neon)
+
+Conferir o player padrao (deve responder winamp.desktop;):
+
+kreadconfig6 --file mimeapps.list --group "Default Applications" --key audio/mpeg
+
+Winamp travou:
+
+~/.local/share/oshl-winamp/wine/bin/wineserver -k
+
+Os outros arquivos (instalar.sh, instalar-bottles.sh, CONSOLE.txt,
+BOTTLES.txt, COMANDOS.txt) sao das tentativas anteriores. Use este.
+=====================================================================
