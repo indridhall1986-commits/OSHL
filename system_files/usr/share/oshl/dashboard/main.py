@@ -72,7 +72,8 @@ class Backend(QObject):
         except OSError:
             saved = ""
         self._wall = saved if saved in self._walls else (self._walls[0] if self._walls else "")
-        self._stats = {"cpu": 0, "gpu": 0, "ram": 0, "disk": 0, "temp": 0, "rx": 0, "tx": 0, "gpuName": "", "real": False}
+        self._stats = {"cpu": 0, "gpu": 0, "ram": 0, "disk": 0, "temp": 0, "cpuTemp": 0, "gpuTemp": 0,
+                       "vramUsed": 0, "vramTotal": 0, "rx": 0, "tx": 0, "gpuName": "", "real": False}
         self._sim = 0.0
         self._timer = QTimer()
         self._timer.timeout.connect(self._update_stats)
@@ -113,6 +114,8 @@ class Backend(QObject):
                 g = d.get("gpu") or {}
                 self._stats = {"cpu": d["cpu"]["total"], "gpu": g.get("util", 0), "ram": d["mem"]["pct"],
                                "disk": d["disk"]["pct"], "temp": d["cpu"].get("temp") or g.get("temp") or 0,
+                               "cpuTemp": d["cpu"].get("temp") or 0, "gpuTemp": g.get("temp", 0),
+                               "vramUsed": g.get("memUsed", 0), "vramTotal": g.get("memTotal", 0),
                                "rx": d["net"]["rx"], "tx": d["net"]["tx"], "gpuName": g.get("name", ""), "real": True}
                 self.statsChanged.emit()
                 return
@@ -123,7 +126,9 @@ class Backend(QObject):
         s = self._sim
         self._stats = {"cpu": 35 + 25 * math.sin(s / 3), "gpu": 55 + 30 * math.sin(s / 5 + 1), "ram": 48 + 4 * math.sin(s / 7),
                        "disk": 71, "temp": 58 + 6 * math.sin(s / 4), "rx": 12.4e6 * (1 + math.sin(s / 2)) / 2,
-                       "tx": 1.3e6 * (1 + math.cos(s / 3)) / 2, "gpuName": "RTX 30", "real": False}
+                       "tx": 1.3e6 * (1 + math.cos(s / 3)) / 2, "gpuName": "RTX 30", "real": False,
+                       "cpuTemp": 52 + 6 * math.sin(s / 4), "gpuTemp": 61 + 5 * math.sin(s / 6),
+                       "vramUsed": 5300 + 400 * math.sin(s / 5), "vramTotal": 10240}
         self.statsChanged.emit()
 
     def _get_stats(self):

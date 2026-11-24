@@ -61,12 +61,12 @@
   },
   "orbital": {
     "name": "ORBITAL",
-    "desc": "Verde-lima com esferas de vidro e malha 3D (dashboard)",
-    "accent": "#9be22d",
-    "bright": "#efff9a",
-    "dim": "#1f4d0c",
-    "bg": "#020c03",
-    "bg2": "#071a06",
+    "desc": "Verde-limao amarelado, vidro organico e hologramas (dashboard)",
+    "accent": "#b9e52b",
+    "bright": "#f3ff8f",
+    "dim": "#2d4a0a",
+    "bg": "#060c02",
+    "bg2": "#0f1a05",
     "alert": "#ff5c5c"
   }
 }

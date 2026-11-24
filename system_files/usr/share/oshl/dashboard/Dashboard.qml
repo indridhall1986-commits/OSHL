@@ -220,50 +220,30 @@ Window {
                 layer.effect: MultiEffect { shadowEnabled: true; shadowColor: win.pal.accent; shadowBlur: 0.8; shadowHorizontalOffset: 0; shadowVerticalOffset: 0 }
             }
         }
-        // ================= widgets (relogios e monitoramento)
-        readonly property real colW: 300 * win.u
-        readonly property real colX: win.width - colW - 70 * win.u
+        // ================= widgets organicos (relogio holografico, sistema, placa de video)
         readonly property real bottomReserve: backend.windowMode ? 0 : 64 * win.u   // espaco da barra de tarefas
 
-        AnalogClock {
-            x: parent.colX + (parent.colW - width) / 2; y: 40 * win.u
-            width: 250 * win.u; height: width
-            pal: win.pal
-            dial: backend.asset("widgets/dial.png")
-            handHour: backend.asset("widgets/hand-hour.png")
-            handMin: backend.asset("widgets/hand-min.png")
-            pivots: backend.pivots
-        }
-
-        Item {
-            id: monitor
-            x: parent.colX; y: 320 * win.u
-            width: parent.colW; height: 470 * win.u
-            GlassFrame { anchors.fill: parent; source: backend.asset("widgets/frame.png"); thickness: 34 * win.u }
-            Column {
-                anchors.fill: parent; anchors.margins: 38 * win.u
-                spacing: 14 * win.u
-                Text { text: "SISTEMA"; color: win.pal.bright; font.family: win.fam; font.pixelSize: 20 * win.u; font.letterSpacing: 5 * win.u }
-                Row {
-                    spacing: 10 * win.u
-                    Gauge { width: 105 * win.u; height: width; value: backend.stats.cpu; label: "CPU"; pal: win.pal; fam: win.fam; dial: backend.asset("widgets/dial.png") }
-                    Gauge { width: 105 * win.u; height: width; value: backend.stats.gpu; label: "GPU"; pal: win.pal; fam: win.fam; dial: backend.asset("widgets/dial.png") }
-                }
-                BarMeter { width: parent.width; value: backend.stats.ram; label: "RAM"; info: Math.round(backend.stats.ram) + "%"; pal: win.pal; fam: win.fam; track: backend.asset("widgets/track.png") }
-                BarMeter { width: parent.width; value: backend.stats.disk; label: "DISCO"; info: Math.round(backend.stats.disk) + "%"; pal: win.pal; fam: win.fam; track: backend.asset("widgets/track.png") }
-                BarMeter {
-                    width: parent.width; value: Math.min(100, backend.stats.rx / 250000); label: "REDE"
-                    info: (backend.stats.rx / 1048576).toFixed(1) + " MB/s"; pal: win.pal; fam: win.fam; track: backend.asset("widgets/track.png")
-                }
-                Text { text: "TEMP  " + Math.round(backend.stats.temp) + "°C"; color: "white"; font.family: win.fam; font.pixelSize: 16 * win.u; font.letterSpacing: 2 * win.u }
-            }
-        }
-
-        DigitalClock {
-            x: 80 * win.u; y: win.height - parent.bottomReserve - height - 36 * win.u
-            width: 400 * win.u; height: width * 0.26
+        HoloClock {
+            x: win.width - width - 60 * win.u; y: 18 * win.u
+            width: 300 * win.u
             pal: win.pal; fam: win.fam
-            panel: backend.asset("widgets/panel.png")
+            emblem: backend.asset("w2/emblem.png"); sphere: backend.asset("w2/sphere.png")
+        }
+        OrganicMonitor {
+            x: win.width - width - 75 * win.u; y: 360 * win.u
+            width: 290 * win.u
+            pal: win.pal; fam: win.fam; stats: backend.stats
+            frame: backend.asset("w2/frame.png"); row: backend.asset("w2/row.png"); rowSel: backend.asset("w2/row-sel.png")
+        }
+        InfoCard {
+            x: 55 * win.u; y: win.height - parent.bottomReserve - height - 6 * win.u
+            width: 340 * win.u
+            pal: win.pal; fam: win.fam
+            card: backend.asset("w2/card.png")
+            title: "PLACA DE VIDEO"; tag: backend.stats.gpuName || "GPU"
+            fields: [{ k: "USO", v: Math.round(backend.stats.gpu) + "%" },
+                     { k: "TEMP", v: Math.round(backend.stats.gpuTemp) + "°C" },
+                     { k: "VRAM", v: (backend.stats.vramUsed / 1024).toFixed(1) + " GB" }]
         }
 
         // ================= menu em arco ao redor do nucleo
