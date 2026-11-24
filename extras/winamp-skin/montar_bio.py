@@ -196,9 +196,15 @@ def erase_eq_band(im, x, knob_y, r, y0, y1, half=31, cap=20):
     im.paste(im.crop((x - half, y0, x + half, y0 + cap)).transpose(Image.FLIP_TOP_BOTTOM), (x - half, y1 - cap))
 
 
+# temas so de skin (nao existem no seletor de temas do OSHL)
+SKIN_THEMES = {
+    "lime": {"name": "LIME", "accent": "#d4ee1c", "bright": "#f6ff9a", "dim": "#3a4a08", "bg": "#070b01", "bg2": "#121a04"},
+}
+
+
 def palette(theme):
     with open(os.path.join(HERE, "..", "..", "build_files", "themes.json"), encoding="utf-8") as fh:
-        t = json.load(fh)[theme]
+        t = SKIN_THEMES.get(theme) or json.load(fh)[theme]
 
     def rgb(h):
         h = h.lstrip("#")

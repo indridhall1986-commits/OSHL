@@ -22,6 +22,7 @@ THEMES = {
     "alerta": (0, 1.00),
     "ambar": (38, 1.00),
     "neon": (288, 1.00),
+    "lime": (71, 1.08, 1.20),     # verde-limao amarelado (referencia: fonte-bio/pecas/referencia-lime.png)
 }
 
 # faixa de verdes que sera recolorida (graus) com rampas suaves nas bordas
@@ -38,7 +39,7 @@ def weight(hdeg):
     return w
 
 
-def recolor(img, target, sat):
+def recolor(img, target, sat, val=1.0):
     rgba = img.convert("RGBA")
     alpha = np.array(rgba)[:, :, 3]
     hsv = np.array(rgba.convert("RGB").convert("HSV")).astype(np.float32)
@@ -49,6 +50,8 @@ def recolor(img, target, sat):
     delta = ((new_h - h + 180) % 360) - 180
     hsv[:, :, 0] = ((h + w * delta) % 360) * 255 / 360
     hsv[:, :, 1] = s * (1 - (1 - sat) * w)
+    if val != 1.0:                                    # brilho extra so nas partes recoloridas
+        hsv[:, :, 2] = hsv[:, :, 2] * (1 + (val - 1) * w)
     out = Image.fromarray(hsv.round().clip(0, 255).astype(np.uint8), "HSV").convert("RGBA")
     out.putalpha(Image.fromarray(alpha))
     return out
