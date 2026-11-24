@@ -2,7 +2,7 @@
 Type=Application
 Name=OSHL visual (primeiro login)
 Comment=Aplica uma vez o visual OSHL (janelas, barra, icones e widgets) depois de instalar ou atualizar
-Exec=sh -c 'M="${XDG_CONFIG_HOME:-$HOME/.config}/oshl/visual-v1"; [ -f "$M" ] && exit 0; sleep 8; /usr/bin/oshl-visual --area && mkdir -p "$(dirname "$M")" && touch "$M"'
+Exec=sh -c 'M="${XDG_CONFIG_HOME:-$HOME/.config}/oshl/visual-v2"; [ -f "$M" ] && exit 0; sleep 8; /usr/bin/oshl-visual --area && mkdir -p "$(dirname "$M")" && touch "$M"'
 X-KDE-autostart-phase=2
 NoDisplay=true
 OnlyShowIn=KDE;

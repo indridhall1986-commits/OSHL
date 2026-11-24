@@ -23,7 +23,8 @@ ButtonsOnRight=IAX
 LayoutName=thumbnail_grid
 
 [ksplashrc][KSplash]
-Theme=org.kde.breeze
+Engine=KSplashQML
+Theme=org.oshl.tron
 
 [Wallpaper]
 Image=OSHL-tron

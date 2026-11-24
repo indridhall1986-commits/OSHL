@@ -63,6 +63,10 @@ gtk-update-icon-cache -f /usr/share/icons/OSHL >/dev/null 2>&1 || true
 dnf5 -y install kvantum
 python3 /ctx/gen-kvantum.py /
 
+# Tela de login (SDDM) nas cores de cada tema
+chmod +x /usr/libexec/oshl-login-tema /usr/libexec/oshl-apps
+bash /ctx/sddm/gen-sddm.sh
+
 # ---------- Audio profissional ----------
 dnf5 -y install \
     pipewire-jack-audio-connection-kit \

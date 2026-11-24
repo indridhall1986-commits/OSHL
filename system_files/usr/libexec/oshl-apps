@@ -1,0 +1,55 @@
+#!/usr/bin/python3
+"""Lista os programas instalados (arquivos .desktop) em JSON para o Menu Iniciar OSHL.
+Cada item: {"id", "name", "icon", "file", "generic", "keys"}. Ignora itens ocultos."""
+import configparser
+import glob
+import json
+import os
+
+LANG = (os.environ.get("LANG") or "pt_BR").split(".")[0]
+HOME = os.path.expanduser("~")
+DATA = os.environ.get("XDG_DATA_HOME") or os.path.join(HOME, ".local/share")
+DIRS = [os.path.join(DATA, "applications"),
+        os.path.join(DATA, "flatpak/exports/share/applications"),
+        "/var/lib/flatpak/exports/share/applications",
+        "/usr/local/share/applications",
+        "/usr/share/applications"]
+DESK = set(x.upper() for x in (os.environ.get("XDG_CURRENT_DESKTOP") or "KDE").split(":"))
+
+
+def loc(sec, key):
+    for k in (f"{key}[{LANG}]", f"{key}[{LANG.split('_')[0]}]", key):
+        if k in sec:
+            return sec[k]
+    return ""
+
+
+apps, seen = [], set()
+for d in DIRS:
+    for f in sorted(glob.glob(os.path.join(d, "**", "*.desktop"), recursive=True)):
+        did = os.path.relpath(f, d).replace(os.sep, "-")
+        if did in seen:
+            continue
+        seen.add(did)
+        cp = configparser.RawConfigParser(strict=False, interpolation=None)
+        cp.optionxform = str
+        try:
+            cp.read(f, encoding="utf-8")
+            s = cp["Desktop Entry"]
+        except (configparser.Error, KeyError, UnicodeDecodeError):
+            continue
+        if s.get("Type", "Application") != "Application":
+            continue
+        if s.get("NoDisplay", "false").lower() == "true" or s.get("Hidden", "false").lower() == "true":
+            continue
+        only = set(x.upper() for x in s.get("OnlyShowIn", "").split(";") if x)
+        notin = set(x.upper() for x in s.get("NotShowIn", "").split(";") if x)
+        if (only and not (only & DESK)) or (notin & DESK):
+            continue
+        name = loc(s, "Name")
+        if not name:
+            continue
+        apps.append({"id": did, "name": name, "icon": s.get("Icon", "application-x-executable"), "file": f,
+                     "generic": loc(s, "GenericName"), "keys": loc(s, "Keywords")})
+apps.sort(key=lambda a: a["name"].lower())
+print(json.dumps(apps, ensure_ascii=False))

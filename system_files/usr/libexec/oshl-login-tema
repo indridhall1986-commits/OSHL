@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Troca a cor da tela de login para o tema do OSHL (chamado por oshl-temas via pkexec).
+set -eu
+T="${1:-orbital}"
+case "$T" in *[!a-z]*) exit 1 ;; esac
+[ -d "/usr/share/sddm/themes/oshl-$T" ] || exit 1
+mkdir -p /etc/sddm.conf.d
+printf '# Tela de login OSHL (trocada junto com o tema por oshl-temas)\n[Theme]\nCurrent=oshl-%s\n' "$T" > /etc/sddm.conf.d/zz-oshl.conf

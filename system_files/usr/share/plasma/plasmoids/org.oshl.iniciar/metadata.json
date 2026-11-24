@@ -1,0 +1,15 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "OSHL" }],
+        "Category": "Application Launchers",
+        "Description": "Menu Iniciar do OSHL: esfera na barra, busca, grade de programas e Desligar/Reiniciar/Suspender",
+        "Icon": "oshl-orb",
+        "Id": "org.oshl.iniciar",
+        "License": "GPL-2.0+",
+        "Name": "Menu Iniciar OSHL",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "X-Plasma-Provides": ["org.kde.plasma.launchermenu"]
+}

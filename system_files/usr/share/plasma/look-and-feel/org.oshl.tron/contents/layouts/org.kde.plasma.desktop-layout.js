@@ -22,9 +22,7 @@ panel.height = 60;
 panel.alignment = "center";
 panel.floating = false;
 
-var start = panel.addWidget("org.kde.plasma.kickoff");   // Menu Iniciar (tecla Windows)
-start.currentConfigGroup = ["General"];
-start.writeConfig("icon", "oshl-orb");
+var start = panel.addWidget("org.oshl.iniciar");        // Menu Iniciar OSHL (esfera; tecla Windows)
 
 panel.addWidget("org.kde.plasma.marginsseparator");
 
