@@ -100,6 +100,7 @@ Window {
         function onPadB() { win.back() }
         function onPadRight() { win.activate() }
         function onPadLeft() { win.back() }
+        function onPadY() { backend.nextWallpaper() }
     }
 
     Item {
@@ -110,6 +111,7 @@ Window {
             else if (ev.key === Qt.Key_Down) win.move(1)
             else if (ev.key === Qt.Key_Return || ev.key === Qt.Key_Enter || ev.key === Qt.Key_Right || ev.key === Qt.Key_Space) win.activate()
             else if (ev.key === Qt.Key_Escape || ev.key === Qt.Key_Backspace || ev.key === Qt.Key_Left) win.back()
+            else if (ev.key === Qt.Key_W || ev.key === Qt.Key_Y) backend.nextWallpaper()
             else return
             ev.accepted = true
         }
@@ -121,10 +123,35 @@ Window {
             layer.enabled: win.pal.tint
             layer.effect: MultiEffect { colorization: 1.0; colorizationColor: win.pal.accent }
 
-            Image {                          // malha (arte gerada) com movimento lento de "respiracao"
+            Item {                           // papel de parede com "respiracao" lenta e troca suave (2 camadas)
+                id: bgHolder
                 anchors.centerIn: parent
                 width: parent.width * 1.12; height: parent.height * 1.12
-                source: backend.asset("bg.jpg"); fillMode: Image.PreserveAspectCrop
+                property bool showA: true
+                function swap(url) {
+                    var incoming = showA ? bgB : bgA
+                    incoming.pending = true
+                    incoming.source = url
+                    if (incoming.status === Image.Ready) incoming.reveal()
+                }
+                Component.onCompleted: bgA.source = backend.wallpaper
+                Image {
+                    id: bgA
+                    property bool pending: false
+                    function reveal() { pending = false; opacity = 1; bgB.opacity = 0; bgHolder.showA = true }
+                    anchors.fill: parent; fillMode: Image.PreserveAspectCrop; asynchronous: true
+                    onStatusChanged: if (status === Image.Ready && pending) reveal()
+                    Behavior on opacity { NumberAnimation { duration: 900; easing.type: Easing.InOutQuad } }
+                }
+                Image {
+                    id: bgB
+                    property bool pending: false
+                    function reveal() { pending = false; opacity = 1; bgA.opacity = 0; bgHolder.showA = false }
+                    anchors.fill: parent; fillMode: Image.PreserveAspectCrop; asynchronous: true; opacity: 0
+                    onStatusChanged: if (status === Image.Ready && pending) reveal()
+                    Behavior on opacity { NumberAnimation { duration: 900; easing.type: Easing.InOutQuad } }
+                }
+                Connections { target: backend; function onWallpaperChanged() { bgHolder.swap(backend.wallpaper) } }
                 SequentialAnimation on scale {
                     loops: Animation.Infinite; running: !previewMode
                     NumberAnimation { to: 1.06; duration: 14000; easing.type: Easing.InOutSine }
@@ -304,7 +331,8 @@ Window {
             anchors.bottom: parent.bottom; anchors.bottomMargin: 60 * win.u
             spacing: 50 * win.u
             Repeater {
-                model: [{ k: "B", t: win.level === 0 ? "SAIR" : "VOLTAR", f: function () { win.back() } },
+                model: [{ k: "Y", t: "FUNDO " + backend.wallpaperInfo, f: function () { backend.nextWallpaper() } },
+                        { k: "B", t: win.level === 0 ? "SAIR" : "VOLTAR", f: function () { win.back() } },
                         { k: "A", t: "SELECIONAR", f: function () { win.activate() } }]
                 Row {
                     required property var modelData

@@ -18,6 +18,17 @@ ASSETS = os.environ.get("OSHL_ORBITAL", "/usr/share/oshl/orbital")
 THEMES = os.environ.get("OSHL_THEMES", "/usr/share/oshl/themes.json")
 FONT = os.environ.get("OSHL_FONT", "/usr/share/fonts/oshl/Orbitron.ttf")
 CONF = os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"), "oshl")
+# Papeis de parede: os do sistema + a pasta do usuario (pacote WALLPAPERS-OSHL ou copiados a mao)
+USER_WALL = os.environ.get("OSHL_WALLPAPERS") or os.path.join(
+    os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share"), "oshl", "wallpapers")
+IMG_EXT = (".jpg", ".jpeg", ".png", ".webp")
+
+
+def list_wallpapers():
+    found = [os.path.join(ASSETS, n) for n in ("bg.jpg", "bg-malha.jpg") if os.path.exists(os.path.join(ASSETS, n))]
+    if os.path.isdir(USER_WALL):
+        found += sorted(os.path.join(USER_WALL, n) for n in os.listdir(USER_WALL) if n.lower().endswith(IMG_EXT))
+    return found
 
 
 def load_palette():
@@ -46,12 +57,20 @@ class Backend(QObject):
     padRight = Signal()
     padA = Signal()
     padB = Signal()
+    padY = Signal()
+    wallpaperChanged = Signal()
 
     def __init__(self, app):
         super().__init__()
         self._app = app
         self._pal = load_palette()
         self._menus = json.load(open(os.path.join(HERE, "menus.json"), encoding="utf-8"))
+        self._walls = list_wallpapers()
+        try:
+            saved = open(os.path.join(CONF, "dashboard-wallpaper"), encoding="utf-8").read().strip()
+        except OSError:
+            saved = ""
+        self._wall = saved if saved in self._walls else (self._walls[0] if self._walls else "")
         self._font = "Sans Serif"
         if os.path.exists(FONT):
             fid = QFontDatabase.addApplicationFont(FONT)
@@ -77,6 +96,32 @@ class Backend(QObject):
         return bool(os.environ.get("OSHL_JANELA")) or "--janela" in sys.argv
 
     windowMode = Property(bool, _get_janela, constant=True)
+
+    def _get_wall(self):
+        return QUrl.fromLocalFile(self._wall).toString() if self._wall else ""
+
+    wallpaper = Property(str, _get_wall, notify=wallpaperChanged)
+
+    def _get_wall_info(self):
+        n = len(self._walls)
+        i = self._walls.index(self._wall) + 1 if self._wall in self._walls else 0
+        return f"{i}/{n}"
+
+    wallpaperInfo = Property(str, _get_wall_info, notify=wallpaperChanged)
+
+    @Slot()
+    def nextWallpaper(self):
+        self._walls = list_wallpapers() or self._walls
+        if not self._walls:
+            return
+        i = self._walls.index(self._wall) if self._wall in self._walls else -1
+        self._wall = self._walls[(i + 1) % len(self._walls)]
+        try:
+            os.makedirs(CONF, exist_ok=True)
+            open(os.path.join(CONF, "dashboard-wallpaper"), "w", encoding="utf-8").write(self._wall)
+        except OSError:
+            pass
+        self.wallpaperChanged.emit()
     palette = Property("QVariant", _get_pal, constant=True)
     menus = Property("QVariant", _get_menus, constant=True)
     fontFamily = Property(str, _get_font, constant=True)
@@ -121,6 +166,7 @@ def gamepad_loop(backend):
     sel = selectors.DefaultSelector()
     devs, last_scan, stick = {}, 0.0, {}
     keymap = {E.BTN_SOUTH: backend.padA, E.BTN_EAST: backend.padB,
+              E.BTN_NORTH: backend.padY, E.BTN_WEST: backend.padY,
               E.BTN_DPAD_UP: backend.padUp, E.BTN_DPAD_DOWN: backend.padDown,
               E.BTN_DPAD_LEFT: backend.padLeft, E.BTN_DPAD_RIGHT: backend.padRight}
     while True:
