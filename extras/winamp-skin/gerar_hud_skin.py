@@ -300,7 +300,7 @@ def build(theme_key, themes):
     sections.append(f'''  <container id="pl" name="Playlist" component="guid:pl" default_x="{L(W) + 50}" default_y="40" default_visible="1">
     <layout id="normal" desktopalpha="1" w="{L(PW)}" h="{L(PH)}">
       <layer id="pl.bg" x="0" y="0" image="{bg}" move="1"/>
-      <windowholder id="pl.list" hold="guid:pl" noshowcmdbar="1" autoopen="1" autoclose="1" autoavailable="1" x="{L(13)}" y="{L(44)}" w="{L(434)}" h="{L(175)}"/>
+      <PlaylistEditor id="pl.list" x="{L(13)}" y="{L(44)}" w="{L(434)}" h="{L(175)}"/>
 {chr(10).join(keys_xml("pl", pl_specs))}
     </layout>
   </container>''')
@@ -311,7 +311,10 @@ def build(theme_key, themes):
               ("wasabi.list.column.separator", P["dim"]), ("wasabi.window.background", P["bg"]),
               ("wasabi.edit.background", P["bg"]), ("wasabi.edit.text", P["bright"]),
               ("wasabi.text.color", P["bright"]), ("pledit.text", P["accent"]),
-              ("pledit.text.current", P["bright"]), ("pledit.bg", P["bg"]), ("pledit.selectedbg", P["dim"])]
+              ("pledit.text.current", P["bright"]), ("pledit.bg", P["bg"]), ("pledit.selectedbg", P["dim"]),
+              ("pledit.bgcolor", P["bg2"]), ("pledit.text.readonly", P["accent"]),
+              ("pledit.text.disabled", P["dim"]), ("pledit.currentOutline", P["bright"]),
+              ("wasabi.list.text.current", P["bright"])]
     color_xml = "\n".join(f'    <color id="{cid}" value="{cstr(v)}"/>' for cid, v in colors)
     xml = f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <WinampAbstractionLayer version="0.8">

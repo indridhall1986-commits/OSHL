@@ -120,14 +120,36 @@ if __name__ == "__main__" and sys.argv[1:2] == ["debug"]:
 
 
 # ------------------------------------------------------------------ montagem
+def key_mask(img):
+    """Formato real do botao dentro do recorte: preenche a partir de varios pontos com
+    cor parecida (balde de tinta), une as regioes e fecha os buracos dos icones."""
+    rgb = img.convert("RGB")
+    w, h = rgb.size
+    total = Image.new("L", (w, h), 0)
+    for fx, fy in ((0.22, 0.5), (0.78, 0.5), (0.5, 0.22), (0.5, 0.8), (0.35, 0.35), (0.65, 0.65)):
+        probe = rgb.copy()
+        ImageDraw.floodfill(probe, (int(w * fx), int(h * fy)), (255, 0, 255), thresh=48)
+        reg = Image.eval(ImageChops.difference(probe, rgb).convert("L"), lambda v: 255 if v else 0)
+        area = sum(reg.histogram()[255:]) / float(w * h)
+        if 0.04 < area < 0.92:
+            total = ImageChops.lighter(total, reg)
+    k = max(3, (min(w, h) // 12) | 1)
+    total = total.filter(ImageFilter.MaxFilter(k)).filter(ImageFilter.MinFilter(k))   # fecha icones
+    if img.mode == "RGBA":
+        total = ImageChops.multiply(total, img.getchannel("A"))
+    return total.filter(ImageFilter.GaussianBlur(1.2))
+
+
 def states(img):
-    rgb, a = img.convert("RGB"), img.getchannel("A")
-    hover = ImageEnhance.Brightness(rgb).enhance(1.22)
-    down = ImageEnhance.Brightness(rgb).enhance(0.72)
-    out = []
-    for v in (rgb, hover, down):
-        v = v.convert("RGBA")
-        v.putalpha(a)
+    """normal = igual ao fundo; hover/down: brilho so DENTRO do formato do botao."""
+    img = img.convert("RGBA")
+    m = key_mask(img)
+    rgb = img.convert("RGB")
+    out = [img]
+    for factor in (1.25, 0.72):
+        fx = ImageEnhance.Brightness(rgb).enhance(factor)
+        v = Image.composite(fx, rgb, m).convert("RGBA")
+        v.putalpha(img.getchannel("A"))
         out.append(v)
     return out
 
@@ -295,7 +317,7 @@ def build(theme):
     sections.append(f'''  <container id="pl" name="Playlist" component="guid:pl" default_x="{round(1376 * SCALES['player']) + 60}" default_y="40" default_visible="1">
     <layout id="normal" desktopalpha="1" w="{W}" h="{H}">
       <layer id="pl.bg" x="0" y="0" image="{bg}" move="1"/>
-      <windowholder id="pl.list" hold="guid:pl" noshowcmdbar="1" autoopen="1" autoclose="1" autoavailable="1" x="{R(lx0, off[0], sc)}" y="{R(ly0, off[1], sc)}" w="{round((lx1 - lx0) * sc)}" h="{round((ly1 - ly0) * sc)}"/>
+      <PlaylistEditor id="pl.list" x="{R(lx0, off[0], sc)}" y="{R(ly0, off[1], sc)}" w="{round((lx1 - lx0) * sc)}" h="{round((ly1 - ly0) * sc)}"/>
 {chr(10).join(buttons_xml("pl", PLAYLIST, im, mask, off, sc))}
     </layout>
   </container>''')
@@ -306,7 +328,10 @@ def build(theme):
               ("wasabi.list.column.separator", P["dim"]), ("wasabi.window.background", P["bg"]),
               ("wasabi.edit.background", P["bg"]), ("wasabi.edit.text", P["bright"]),
               ("wasabi.text.color", P["bright"]), ("pledit.text", P["accent"]),
-              ("pledit.text.current", P["bright"]), ("pledit.bg", P["bg"]), ("pledit.selectedbg", P["dim"])]
+              ("pledit.text.current", P["bright"]), ("pledit.bg", P["bg"]), ("pledit.selectedbg", P["dim"]),
+              ("pledit.bgcolor", P["bg2"]), ("pledit.text.readonly", P["accent"]),
+              ("pledit.text.disabled", P["dim"]), ("pledit.currentOutline", P["bright"]),
+              ("wasabi.list.text.current", P["bright"])]
     color_xml = "\n".join(f'    <color id="{cid}" value="{cs(v)}"/>' for cid, v in colors)
     xml = f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <WinampAbstractionLayer version="0.8">
