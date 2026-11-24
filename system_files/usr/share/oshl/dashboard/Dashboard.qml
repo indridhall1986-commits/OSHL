@@ -109,6 +109,14 @@ Window {
         id: dashRoot
         anchors.fill: parent
         focus: true
+        WheelHandler {                       // rodinha do mouse gira o menu (como o analogico)
+            property real acc: 0
+            onWheel: function (ev) {
+                acc += ev.angleDelta.y
+                while (acc >= 120) { acc -= 120; win.move(-1) }
+                while (acc <= -120) { acc += 120; win.move(1) }
+            }
+        }
         Keys.onPressed: function (ev) {
             if (ev.key === Qt.Key_Up) win.move(-1)
             else if (ev.key === Qt.Key_Down) win.move(1)
@@ -196,6 +204,8 @@ Window {
                 Image {
                     id: coreImg
                     anchors.fill: parent; source: backend.asset("core.png"); fillMode: Image.PreserveAspectFit
+                    rotation: win.cur * 72 + win.level * 180  // a esfera gira junto com o menu
+                    Behavior on rotation { NumberAnimation { duration: 450; easing.type: Easing.OutBack } }
                     SequentialAnimation on scale {
                         loops: Animation.Infinite; running: !previewMode
                         NumberAnimation { to: 1.035; duration: 1800; easing.type: Easing.InOutSine }
