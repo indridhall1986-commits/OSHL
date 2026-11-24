@@ -11,7 +11,7 @@ Item {
     property var fields: []                     // [{ k: "TEMP", v: "61 C" }, ...]
     height: width * 688 / 1400
 
-    Image { anchors.fill: parent; source: c.card; smooth: true; mipmap: true }
+    Tinted { anchors.fill: parent; source: c.card; tint: c.pal.tint; tintColor: c.pal.accent }
     Text {
         x: c.width * 0.08; anchors.verticalCenter: parent.top; anchors.verticalCenterOffset: c.height * 0.19
         text: c.title

@@ -20,10 +20,11 @@ Item {
     readonly property real cy: height * 0.330
     readonly property real r: width * 0.305
 
-    Image { anchors.fill: parent; source: h.emblem; smooth: true; mipmap: true }
-    Image {                                     // globo de grade dentro da esfera
+    Tinted { anchors.fill: parent; source: h.emblem; tint: h.pal.tint; tintColor: h.pal.accent }
+    Tinted {                                    // globo de grade dentro da esfera
+        tint: h.pal.tint; tintColor: h.pal.accent
         x: h.cx - h.r * 0.92; y: h.cy - h.r * 0.92; width: h.r * 1.84; height: h.r * 1.84
-        source: h.sphere; smooth: true; mipmap: true
+        source: h.sphere
         SequentialAnimation on opacity {
             loops: Animation.Infinite; running: !previewMode
             NumberAnimation { from: 0.25; to: 0.55; duration: 2400; easing.type: Easing.InOutSine }

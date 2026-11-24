@@ -25,7 +25,7 @@ Item {
         return best
     }
 
-    Image { anchors.fill: parent; source: m.frame; smooth: true; mipmap: true }
+    Tinted { anchors.fill: parent; source: m.frame; tint: m.pal.tint; tintColor: m.pal.accent }
     Text {
         anchors.horizontalCenter: parent.left; anchors.horizontalCenterOffset: m.width * 0.53
         anchors.verticalCenter: parent.top; anchors.verticalCenterOffset: m.height * 0.115
@@ -43,7 +43,7 @@ Item {
                 required property int index
                 readonly property bool sel: index === m.topIdx
                 width: parent.width; height: width * 0.155
-                Image { anchors.fill: parent; source: sel ? m.rowSel : m.row; smooth: true; mipmap: true }
+                Tinted { anchors.fill: parent; source: sel ? m.rowSel : m.row; tint: m.pal.tint; tintColor: m.pal.accent }
                 Text {
                     x: parent.width * 0.09; anchors.verticalCenter: parent.verticalCenter
                     text: modelData.k

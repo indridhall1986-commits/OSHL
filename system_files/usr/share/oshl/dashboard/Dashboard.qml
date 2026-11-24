@@ -40,6 +40,8 @@ Window {
         if (e.items) {
             parentIdx = cur; level = 1; cur = 0
             backend.sound("select"); switchAnim.restart()
+        } else if (e.action === "widgets") {
+            backend.sound("select"); backend.showAllWidgets(); toast.show("WIDGETS VISIVEIS")
         } else if (e.cmd) {
             backend.sound("select")
             if (backend.testMode) { toast.show("ABRIRIA: " + e.label); return }
@@ -224,18 +226,27 @@ Window {
         readonly property real bottomReserve: backend.windowMode ? 0 : 64 * win.u   // espaco da barra de tarefas
 
         HoloClock {
+            visible: backend.widgets["clock"] !== false
+            HoverHandler { id: hv_clock }
+            CloseBtn { show: hv_clock.hovered; pal: win.pal; onClicked: backend.setWidget("clock", false) }
             x: win.width - width - 60 * win.u; y: 18 * win.u
             width: 300 * win.u
             pal: win.pal; fam: win.fam
             emblem: backend.asset("w2/emblem.png"); sphere: backend.asset("w2/sphere.png")
         }
         OrganicMonitor {
+            visible: backend.widgets["monitor"] !== false
+            HoverHandler { id: hv_monitor }
+            CloseBtn { show: hv_monitor.hovered; pal: win.pal; onClicked: backend.setWidget("monitor", false) }
             x: win.width - width - 75 * win.u; y: 360 * win.u
             width: 290 * win.u
             pal: win.pal; fam: win.fam; stats: backend.stats
             frame: backend.asset("w2/frame.png"); row: backend.asset("w2/row.png"); rowSel: backend.asset("w2/row-sel.png")
         }
         InfoCard {
+            visible: backend.widgets["gpu"] !== false
+            HoverHandler { id: hv_gpu }
+            CloseBtn { show: hv_gpu.hovered; pal: win.pal; onClicked: backend.setWidget("gpu", false) }
             x: 55 * win.u; y: win.height - parent.bottomReserve - height - 6 * win.u
             width: 340 * win.u
             pal: win.pal; fam: win.fam
@@ -295,8 +306,9 @@ Window {
                         }
                     }
 
-                    Image {
+                    Tinted {
                         id: bubble
+                        tint: win.pal.tint; tintColor: win.pal.accent
                         width: ent.bs; height: ent.bs
                         source: backend.asset("bubble.png")
                         opacity: ent.active ? 1.0 : 0.75
@@ -315,7 +327,8 @@ Window {
                         transform: Translate { x: ent.active ? 14 * win.u : 0; Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } } }
                         layer.enabled: ent.active
                         layer.effect: MultiEffect { brightness: 0.15; shadowEnabled: true; shadowColor: win.pal.accent; shadowBlur: 1.0; shadowHorizontalOffset: 0; shadowVerticalOffset: 0; shadowOpacity: 0.7 }
-                        Image {
+                        Tinted {
+                            tint: win.pal.tint; tintColor: win.pal.accent
                             anchors.fill: parent
                             source: backend.asset("pill.png")
                             opacity: ent.active ? 1.0 : 0.5
@@ -355,7 +368,7 @@ Window {
                     spacing: 22 * win.u
                     Item {
                         width: 54 * win.u; height: 54 * win.u
-                        Image { anchors.fill: parent; anchors.margins: -4 * win.u; source: backend.asset("bubble.png") }
+                        Tinted { anchors.fill: parent; anchors.margins: -4 * win.u; source: backend.asset("bubble.png"); tint: win.pal.tint; tintColor: win.pal.accent }
                         Text {
                             anchors.centerIn: parent
                             text: modelData.k

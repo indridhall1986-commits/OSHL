@@ -136,6 +136,35 @@ class Backend(QObject):
 
     stats = Property("QVariant", _get_stats, notify=statsChanged)
 
+    widgetsChanged = Signal()
+
+    def _wfile(self):
+        return os.path.join(CONF, "dashboard-widgets.json")
+
+    def _get_widgets(self):
+        try:
+            return json.load(open(self._wfile(), encoding="utf-8"))
+        except (OSError, ValueError):
+            return {}
+
+    widgets = Property("QVariant", _get_widgets, notify=widgetsChanged)
+
+    @Slot(str, bool)
+    def setWidget(self, name, on):
+        w = self._get_widgets()
+        w[name] = on
+        os.makedirs(CONF, exist_ok=True)
+        json.dump(w, open(self._wfile(), "w", encoding="utf-8"))
+        self.widgetsChanged.emit()
+
+    @Slot()
+    def showAllWidgets(self):
+        try:
+            os.remove(self._wfile())
+        except OSError:
+            pass
+        self.widgetsChanged.emit()
+
     def _get_pivots(self):
         try:
             return json.load(open(os.path.join(ASSETS, "widgets", "pivots.json"), encoding="utf-8"))
