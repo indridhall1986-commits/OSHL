@@ -1,0 +1,101 @@
+=====================================================================
+ WINAMP NO OSHL - COMANDOS DE CONSOLE (Konsole)
+ Colar no terminal: Ctrl+Shift+V  |  um comando de cada vez
+ Espere a linha de comando voltar antes de colar o proximo.
+=====================================================================
+
+
+---------------------------------------------------------------------
+ PASSO 1 - Abrir o terminal NA PASTA DO PACOTE
+---------------------------------------------------------------------
+Abra a pasta WINAMP-OSHL-PRONTO (em Downloads) no gerenciador de
+arquivos e aperte Shift+F4. Ou cole:
+
+cd ~/Downloads/WINAMP-OSHL-PRONTO
+
+
+---------------------------------------------------------------------
+ PASSO 2 - Fechar qualquer coisa do Wine que esteja aberta
+---------------------------------------------------------------------
+wineserver -k
+
+
+---------------------------------------------------------------------
+ PASSO 3 - Instalar (ou reinstalar) tudo
+---------------------------------------------------------------------
+bash instalar.sh
+
+Deve mostrar "[1/5]" ate "[5/5]" e terminar com "PRONTO!".
+Se pedir para baixar Mono/Gecko: clique em Cancelar.
+Se aparecer "ERRO:", tire uma foto da tela.
+
+
+---------------------------------------------------------------------
+ PASSO 4 - Conferir onde o Winamp ficou
+---------------------------------------------------------------------
+find ~/.wine/drive_c -iname winamp.exe
+
+Deve aparecer um caminho terminando em /Winamp/winamp.exe
+
+
+---------------------------------------------------------------------
+ PASSO 5 - Abrir o Winamp mostrando erros (para diagnostico)
+---------------------------------------------------------------------
+~/.local/bin/winamp
+
+Se nao abrir: espere 15 segundos e tire uma foto das ultimas linhas.
+Para fechar: Ctrl+C no terminal.
+
+
+---------------------------------------------------------------------
+ PASSO 6 - Tornar o Winamp o player padrao (o instalar.sh ja faz)
+---------------------------------------------------------------------
+for m in audio/mpeg audio/mp4 audio/x-m4a audio/aac audio/flac audio/x-flac audio/ogg audio/x-vorbis+ogg audio/opus audio/x-wav audio/wav audio/x-ms-wma audio/x-mpegurl; do xdg-mime default winamp.desktop "$m"; done
+
+Conferir (deve responder winamp.desktop):
+
+xdg-mime query default audio/mpeg
+
+
+---------------------------------------------------------------------
+ PASSO 7 - Escolher o skin (vale na proxima vez que o Winamp abrir)
+---------------------------------------------------------------------
+Skin do tema atual do OSHL:
+
+~/.local/bin/oshl-winamp-tema
+
+Ou um tema especifico (escolha UM):
+
+~/.local/bin/oshl-winamp-tema tron
+~/.local/bin/oshl-winamp-tema matrix
+~/.local/bin/oshl-winamp-tema reator
+~/.local/bin/oshl-winamp-tema alerta
+~/.local/bin/oshl-winamp-tema ambar
+~/.local/bin/oshl-winamp-tema neon
+
+
+=====================================================================
+ EXTRAS
+=====================================================================
+
+Voltar para o player do OSHL (Musica OSHL):
+
+for m in audio/mpeg audio/mp4 audio/x-m4a audio/aac audio/flac audio/x-flac audio/ogg audio/x-vorbis+ogg audio/opus audio/x-wav audio/wav audio/x-ms-wma audio/x-mpegurl; do xdg-mime default org.strawberrymusicplayer.strawberry.desktop "$m"; done
+
+Abrir uma musica no Winamp pelo terminal:
+
+~/.local/bin/winamp ~/Musicas/arquivo.mp3
+
+Winamp travou:
+
+wineserver -k
+
+Recopiar so os skins (na pasta do pacote):
+
+cp -f Skins/*.wal Skins/*.wsz "$(dirname "$(find ~/.wine/drive_c -iname winamp.exe | head -n 1)")/Skins/"
+
+Desinstalar o Winamp:
+
+rm -rf "$(dirname "$(find ~/.wine/drive_c -iname winamp.exe | head -n 1)")"
+rm -f ~/.local/bin/winamp ~/.local/bin/oshl-winamp-tema ~/.local/share/applications/winamp.desktop
+=====================================================================

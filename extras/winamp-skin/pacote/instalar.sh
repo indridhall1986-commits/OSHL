@@ -10,11 +10,11 @@ fail() { echo; echo "ERRO: $*"; read -r -p "Enter para fechar..." _; exit 1; }
 
 command -v wine >/dev/null || fail "Wine nao encontrado no sistema."
 
+PFX="${WINEPREFIX:-$HOME/.wine}"
+
 find_winamp() {
-    for p in 'C:\Program Files (x86)\Winamp' 'C:\Program Files\Winamp'; do
-        d="$(winepath -u "$p" 2>/dev/null)"
-        [ -f "$d/winamp.exe" ] && { echo "$d"; return 0; }
-    done
+    f="$(find "$PFX/drive_c" -maxdepth 4 -iname winamp.exe -path '*Winamp*' 2>/dev/null | head -n 1)"
+    [ -n "$f" ] && { dirname "$f"; return 0; }
     return 1
 }
 
@@ -22,15 +22,22 @@ find_winamp() {
 WA="$(find_winamp)"
 if [ -z "$WA" ]; then
     [ -f "$PKG/Winamp/winamp.exe" ] || fail "Pasta Winamp (com winamp.exe) nao esta no pacote."
-    say "[1/5] Copiando o Winamp 5.9.2 para o Wine (sem internet)..."
-    echo "   (na primeira vez o Wine prepara o ambiente; se pedir para baixar Mono/Gecko, clique em Cancelar)"
-    wineboot -i >/dev/null 2>&1 || true
-    DEST="$(winepath -u 'C:\Program Files (x86)' 2>/dev/null)"
-    [ -d "$DEST" ] || DEST="$(winepath -u 'C:\Program Files' 2>/dev/null)"
-    [ -n "$DEST" ] || fail "Nao foi possivel localizar a pasta Program Files do Wine."
+    say "[1/5] Preparando o Wine e copiando o Winamp 5.9.2 (sem internet)..."
+    echo "   (se o Wine pedir para baixar Mono/Gecko, clique em Cancelar)"
+    if [ ! -d "$PFX/drive_c" ]; then
+        wineboot -i >/dev/null 2>&1 || true
+        wineserver -w 2>/dev/null || true          # espera o Wine terminar de criar o ambiente
+    fi
+    [ -d "$PFX/drive_c" ] || fail "O Wine nao criou a pasta $PFX/drive_c."
+    if [ -d "$PFX/drive_c/Program Files (x86)" ]; then
+        DEST="$PFX/drive_c/Program Files (x86)"
+    else
+        DEST="$PFX/drive_c/Program Files"
+    fi
     mkdir -p "$DEST"
-    cp -r "$PKG/Winamp" "$DEST/"
+    cp -r "$PKG/Winamp" "$DEST/" || fail "Falha ao copiar o Winamp para $DEST."
     WA="$(find_winamp)" || fail "Winamp nao foi encontrado depois da copia."
+    echo "   Winamp copiado para: $WA"
 else
     say "[1/5] Winamp ja instalado em: $WA"
 fi
@@ -53,9 +60,10 @@ case "$T" in
     tron) S=TRON ;; matrix) S=MATRIZ ;; reator) S=REATOR ;;
     alerta) S=ALERTA ;; ambar) S=AMBAR ;; neon) S=NEON ;; *) S=MATRIZ ;;
 esac
-INI="$(find "${WINEPREFIX:-$HOME/.wine}/drive_c" -iname winamp.ini -path '*Winamp*' 2>/dev/null | head -n 1)"
+PFX="${WINEPREFIX:-$HOME/.wine}"
+INI="$(find "$PFX/drive_c" -iname winamp.ini -path '*Winamp*' 2>/dev/null | head -n 1)"
 if [ -z "$INI" ]; then
-    INI="$(winepath -u 'C:\users' 2>/dev/null)/$USER/AppData/Roaming/Winamp/winamp.ini"
+    INI="$PFX/drive_c/users/$USER/AppData/Roaming/Winamp/winamp.ini"
     mkdir -p "$(dirname "$INI")"
     printf '[Winamp]\r\n' > "$INI"
 fi
@@ -72,10 +80,16 @@ chmod +x "$HOME/.local/bin/oshl-winamp-tema"
 say "[4/5] Tornando o Winamp o player padrao..."
 cat > "$HOME/.local/bin/winamp" <<'EOF'
 #!/usr/bin/env bash
-EXE="$(winepath -u 'C:\Program Files (x86)\Winamp\winamp.exe')"
-[ -f "$EXE" ] || EXE="$(winepath -u 'C:\Program Files\Winamp\winamp.exe')"
+# Abre o Winamp (Wine), convertendo caminhos Linux -> Windows
+PFX="${WINEPREFIX:-$HOME/.wine}"
+EXE="$(find "$PFX/drive_c" -maxdepth 4 -iname winamp.exe -path '*Winamp*' 2>/dev/null | head -n 1)"
+if [ -z "$EXE" ]; then
+    kdialog --error "Winamp nao encontrado no Wine. Rode o instalar.sh do pacote WINAMP-OSHL." 2>/dev/null
+    echo "Winamp nao encontrado em $PFX/drive_c" >&2
+    exit 1
+fi
 args=(); for f in "$@"; do args+=("$(winepath -w "$f")"); done
-exec wine "$EXE" "${args[@]}"
+cd "$(dirname "$EXE")" && exec wine "$EXE" "${args[@]}"
 EOF
 chmod +x "$HOME/.local/bin/winamp"
 mkdir -p "$HOME/.local/share/applications"
