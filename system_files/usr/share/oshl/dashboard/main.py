@@ -59,6 +59,7 @@ class Backend(QObject):
     padB = Signal()
     padY = Signal()
     wallpaperChanged = Signal()
+    statsChanged = Signal()
 
     def __init__(self, app):
         super().__init__()
@@ -71,6 +72,12 @@ class Backend(QObject):
         except OSError:
             saved = ""
         self._wall = saved if saved in self._walls else (self._walls[0] if self._walls else "")
+        self._stats = {"cpu": 0, "gpu": 0, "ram": 0, "disk": 0, "temp": 0, "rx": 0, "tx": 0, "gpuName": "", "real": False}
+        self._sim = 0.0
+        self._timer = QTimer()
+        self._timer.timeout.connect(self._update_stats)
+        self._timer.start(1500)
+        self._update_stats()
         self._font = "Sans Serif"
         if os.path.exists(FONT):
             fid = QFontDatabase.addApplicationFont(FONT)
@@ -96,6 +103,41 @@ class Backend(QObject):
         return bool(os.environ.get("OSHL_JANELA")) or "--janela" in sys.argv
 
     windowMode = Property(bool, _get_janela, constant=True)
+
+    def _update_stats(self):
+        """Dados reais (oshl-hud-stats, no OSHL) ou simulados (teste no Windows)."""
+        exe = "/usr/libexec/oshl-hud-stats"
+        if os.path.exists(exe):
+            try:
+                d = json.loads(subprocess.run([exe], capture_output=True, text=True, timeout=3).stdout)
+                g = d.get("gpu") or {}
+                self._stats = {"cpu": d["cpu"]["total"], "gpu": g.get("util", 0), "ram": d["mem"]["pct"],
+                               "disk": d["disk"]["pct"], "temp": d["cpu"].get("temp") or g.get("temp") or 0,
+                               "rx": d["net"]["rx"], "tx": d["net"]["tx"], "gpuName": g.get("name", ""), "real": True}
+                self.statsChanged.emit()
+                return
+            except (OSError, ValueError, KeyError, subprocess.SubprocessError):
+                pass
+        import math
+        self._sim += 1
+        s = self._sim
+        self._stats = {"cpu": 35 + 25 * math.sin(s / 3), "gpu": 55 + 30 * math.sin(s / 5 + 1), "ram": 48 + 4 * math.sin(s / 7),
+                       "disk": 71, "temp": 58 + 6 * math.sin(s / 4), "rx": 12.4e6 * (1 + math.sin(s / 2)) / 2,
+                       "tx": 1.3e6 * (1 + math.cos(s / 3)) / 2, "gpuName": "RTX 30", "real": False}
+        self.statsChanged.emit()
+
+    def _get_stats(self):
+        return self._stats
+
+    stats = Property("QVariant", _get_stats, notify=statsChanged)
+
+    def _get_pivots(self):
+        try:
+            return json.load(open(os.path.join(ASSETS, "widgets", "pivots.json"), encoding="utf-8"))
+        except (OSError, ValueError):
+            return {"hand-hour": {"pivot_x": 0.5, "pivot_y": 0.70}, "hand-min": {"pivot_x": 0.5, "pivot_y": 0.688}}
+
+    pivots = Property("QVariant", _get_pivots, constant=True)
 
     def _get_wall(self):
         return QUrl.fromLocalFile(self._wall).toString() if self._wall else ""
