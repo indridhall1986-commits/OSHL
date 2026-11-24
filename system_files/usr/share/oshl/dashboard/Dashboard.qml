@@ -6,11 +6,11 @@ import QtQuick.Effects
 // Dashboard OSHL: nucleo de vidro + menu de esferas e capsulas sobre a malha orbital.
 Window {
     id: win
-    width: 1920
-    height: 1080
+    width: backend.windowMode ? 1280 : 1920
+    height: backend.windowMode ? 720 : 1080
     visible: true
-    visibility: previewMode ? Window.Windowed : Window.FullScreen
-    flags: previewMode ? Qt.Window : Qt.FramelessWindowHint
+    visibility: (previewMode || backend.windowMode) ? Window.Windowed : Window.FullScreen
+    flags: (previewMode || backend.windowMode) ? Qt.Window : Qt.FramelessWindowHint
     color: "black"
     title: "Dashboard OSHL"
 

@@ -72,6 +72,11 @@ class Backend(QObject):
         return bool(os.environ.get("OSHL_TESTE"))
 
     testMode = Property(bool, _get_test, constant=True)
+
+    def _get_janela(self):
+        return bool(os.environ.get("OSHL_JANELA")) or "--janela" in sys.argv
+
+    windowMode = Property(bool, _get_janela, constant=True)
     palette = Property("QVariant", _get_pal, constant=True)
     menus = Property("QVariant", _get_menus, constant=True)
     fontFamily = Property(str, _get_font, constant=True)
