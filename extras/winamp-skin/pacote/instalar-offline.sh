@@ -96,11 +96,16 @@ say "[7/7] Ligando o skin aos temas do OSHL..."
 cat > "$HOME/.local/bin/oshl-winamp-tema" <<'EOF'
 #!/usr/bin/env bash
 # Define o skin do Winamp conforme o tema do OSHL (vale na proxima abertura do Winamp).
-T="${1:-$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/oshl/theme" 2>/dev/null || echo tron)}"
+# Uso: oshl-winamp-tema [tema] [hud|plastic]   (o estilo escolhido fica salvo)
+CONF="${XDG_CONFIG_HOME:-$HOME/.config}/oshl"
+T="${1:-$(cat "$CONF/theme" 2>/dev/null || echo tron)}"
+case "${2:-}" in hud|plastic) mkdir -p "$CONF"; echo "$2" > "$CONF/winamp-estilo" ;; esac
+E="$(cat "$CONF/winamp-estilo" 2>/dev/null || echo hud)"
 case "$T" in
     tron) S=TRON ;; matrix) S=MATRIZ ;; reator) S=REATOR ;;
     alerta) S=ALERTA ;; ambar) S=AMBAR ;; neon) S=NEON ;; *) S=MATRIZ ;;
 esac
+[ "$E" = plastic ] && PREFIX=OSHL-Plastic || PREFIX=OSHL-HUD
 P="$HOME/.local/share/oshl-winamp/prefix/drive_c"
 INI="$(find "$P" -iname winamp.ini -path '*Winamp*' 2>/dev/null | head -n 1)"
 if [ -z "$INI" ]; then
@@ -111,11 +116,11 @@ if [ -z "$INI" ]; then
     printf '[Winamp]\r\n' > "$INI"
 fi
 if grep -qi '^skin=' "$INI"; then
-    sed -i "s|^[Ss]kin=.*|skin=OSHL-Plastic-$S.wal\r|" "$INI"
+    sed -i "s|^[Ss]kin=.*|skin=$PREFIX-$S.wal\r|" "$INI"
 else
-    sed -i "0,/^\[Winamp\]/s||[Winamp]\r\nskin=OSHL-Plastic-$S.wal\r|" "$INI"
+    sed -i "0,/^\[Winamp\]/s||[Winamp]\r\nskin=$PREFIX-$S.wal\r|" "$INI"
 fi
-echo "Winamp: skin OSHL-Plastic-$S"
+echo "Winamp: skin $PREFIX-$S"
 EOF
 chmod +x "$HOME/.local/bin/oshl-winamp-tema"
 "$HOME/.local/bin/oshl-winamp-tema"

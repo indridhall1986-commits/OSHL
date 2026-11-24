@@ -25,13 +25,26 @@ bash instalar-offline.sh
 ~/.local/bin/winamp
 
 ---------------------------------------------------------------------
+ JA TEM O WINAMP INSTALADO? So atualizar os skins (ex.: skin HUD)
+---------------------------------------------------------------------
+Na pasta do pacote (Shift+F4):
+
+bash atualizar-skins.sh
+
+   Instala os skins novos e ativa o estilo HUD no tema atual.
+   Depois feche e abra o Winamp.
+
+---------------------------------------------------------------------
  Uteis
 ---------------------------------------------------------------------
 Trocar o skin (vale na proxima abertura do Winamp):
 
-~/.local/bin/oshl-winamp-tema neon
+~/.local/bin/oshl-winamp-tema neon hud
+~/.local/bin/oshl-winamp-tema neon plastic
 
-   (tron, matrix, reator, alerta, ambar, neon)
+   Temas: tron, matrix, reator, alerta, ambar, neon
+   Estilos: hud (visual do painel do OSHL) ou plastic (plastico translucido)
+   O estilo escolhido fica salvo; depois basta: ~/.local/bin/oshl-winamp-tema neon
 
 Conferir o player padrao (deve responder winamp.desktop;):
 
