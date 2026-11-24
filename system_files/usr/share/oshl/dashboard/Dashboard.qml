@@ -272,6 +272,10 @@ Window {
         Item {
             id: menuLayer
             anchors.fill: parent
+            // mouse parado sobre o menu central: o Dashboard pega o foco e as setas do teclado giram o menu
+            HoverHandler {
+                onHoveredChanged: if (hovered) { win.requestActivate(); dashRoot.forceActiveFocus() }
+            }
             transform: Translate { id: menuShift; x: 0 }
             ParallelAnimation {
                 id: switchAnim
