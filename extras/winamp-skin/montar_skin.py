@@ -326,10 +326,10 @@ def build(theme):
     bg = save("pl.bg", scaled(panel_image(im, pnl)))
     W, H = s(pnl[2] - pnl[0]), s(pnl[3] - pnl[1])
     lx0, ly0, lx1, ly1 = rel(PLAYLIST["list"], pnl)
-    sections.append(f'''  <container id="Pledit" name="Playlist Editor" dynamic="1" component="guid:{45F3F7C1-A6F3-4ee6-A15E-125E92FC3F8D}" default_x="{s(1774) + 40}" default_y="40" default_visible="1">
+    sections.append(f'''  <container id="Pledit" name="Playlist Editor" dynamic="1" component="guid:{{45F3F7C1-A6F3-4ee6-A15E-125E92FC3F8D}}" default_x="{s(1774) + 40}" default_y="40" default_visible="1">
     <layout id="normal" desktopalpha="1" w="{W}" h="{H}">
       <layer id="pl.bg" x="0" y="0" image="{bg}" move="1"/>
-      <component id="pl.list" x="{lx0}" y="{ly0}" w="{lx1 - lx0}" h="{ly1 - ly0}" noshowcmdbar="1" autoopen="1" autoclose="1" param="guid:{45F3F7C1-A6F3-4ee6-A15E-125E92FC3F8D}"/>
+      <component id="pl.list" x="{lx0}" y="{ly0}" w="{lx1 - lx0}" h="{ly1 - ly0}" noshowcmdbar="1" autoopen="1" autoclose="1" param="guid:{{45F3F7C1-A6F3-4ee6-A15E-125E92FC3F8D}}"/>
 {chr(10).join(button_xml(PLAYLIST, im, "pl"))}
     </layout>
   </container>''')

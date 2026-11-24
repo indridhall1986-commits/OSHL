@@ -314,10 +314,10 @@ def build(theme):
     im, mask = load("playlist")
     bg, off, W, H = finish_bg("pl.bg", im, mask, sc)
     lx0, ly0, lx1, ly1 = PLAYLIST["list"]
-    sections.append(f'''  <container id="Pledit" name="Playlist Editor" dynamic="1" component="guid:{45F3F7C1-A6F3-4ee6-A15E-125E92FC3F8D}" default_x="{round(1376 * SCALES['player']) + 60}" default_y="40" default_visible="1">
+    sections.append(f'''  <container id="Pledit" name="Playlist Editor" dynamic="1" component="guid:{{45F3F7C1-A6F3-4ee6-A15E-125E92FC3F8D}}" default_x="{round(1376 * SCALES['player']) + 60}" default_y="40" default_visible="1">
     <layout id="normal" desktopalpha="1" w="{W}" h="{H}">
       <layer id="pl.bg" x="0" y="0" image="{bg}" move="1"/>
-      <component id="pl.list" x="{R(lx0, off[0], sc)}" y="{R(ly0, off[1], sc)}" w="{round((lx1 - lx0) * sc)}" h="{round((ly1 - ly0) * sc)}" noshowcmdbar="1" autoopen="1" autoclose="1" param="guid:{45F3F7C1-A6F3-4ee6-A15E-125E92FC3F8D}"/>
+      <component id="pl.list" x="{R(lx0, off[0], sc)}" y="{R(ly0, off[1], sc)}" w="{round((lx1 - lx0) * sc)}" h="{round((ly1 - ly0) * sc)}" noshowcmdbar="1" autoopen="1" autoclose="1" param="guid:{{45F3F7C1-A6F3-4ee6-A15E-125E92FC3F8D}}"/>
 {chr(10).join(buttons_xml("pl", PLAYLIST, im, mask, off, sc))}
     </layout>
   </container>''')
