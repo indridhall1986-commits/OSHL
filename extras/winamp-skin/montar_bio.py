@@ -25,66 +25,6 @@ SCALES = {"player": 0.5, "equalizador": 0.5, "playlist": 0.39}
 if METADE:
     SCALES = {k: v / 2 for k, v in SCALES.items()}
 
-# ------------------------------------------------------------------ trilho do volume endireitado
-# Na arte o trilho do volume e INCLINADO (~8 graus), mas o slider do Winamp so anda na horizontal.
-# Solucao: a capsula do trilho e endireitada (girada), limpa (sem o puxador) e recolocada na
-# horizontal um pouco mais acima, dentro do vidro; o lugar da capsula inclinada e preenchido
-# com o vidro em volta. O puxador e recortado da arte endireitada.
-VOL_P0, VOL_P1 = (771, 709), (1001, 676)      # extremos da fenda na arte original
-VOL_CAP = (744, 676, 1034, 723)               # capsula (na arte endireitada)
-VOL_THUMB = (779, 680, 871, 724)              # puxador (na arte endireitada)
-VOL_Y = 680                                   # centro da capsula horizontal na arte final
-VOL_REGION = (690, 600, 1100, 770)            # area de trabalho (so ela e processada)
-
-
-def straighten_volume(im):
-    """Devolve (imagem com trilho horizontal limpo, puxador RGBA, caixa da capsula, y do puxador)."""
-    import math
-    import numpy as np
-    ang = math.degrees(math.atan2(VOL_P1[1] - VOL_P0[1], VOL_P1[0] - VOL_P0[0]))
-    C = ((VOL_P0[0] + VOL_P1[0]) / 2, (VOL_P0[1] + VOL_P1[1]) / 2)
-    rot = im.rotate(ang, resample=Image.BICUBIC, center=C)
-    # capsula limpa: tampas da arte + miolo feito com a coluna media do trecho vazio
-    cap = rot.copy()
-    col = np.asarray(rot.crop((900, 668, 990, 732))).astype(np.float32).mean(1, keepdims=True)
-    cap.paste(Image.fromarray(np.repeat(col, 1000 - 776, 1).clip(0, 255).astype(np.uint8), "RGBA"), (776, 668))
-    for xa in (776, 1000):
-        cap.paste(cap.crop((xa - 4, 668, xa + 4, 732)).filter(ImageFilter.BoxBlur(2)), (xa - 4, 668))
-    thumb = rot.crop(VOL_THUMB)
-    tm = Image.new("L", thumb.size, 0)
-    ImageDraw.Draw(tm).rounded_rectangle((1, 1, thumb.width - 2, thumb.height - 2), radius=6, fill=255)
-    thumb.putalpha(ImageChops.multiply(thumb.getchannel("A"), tm.filter(ImageFilter.GaussianBlur(0.8))))
-    # apaga a capsula inclinada: preenche a partir do vidro em volta (difusao), so na area de trabalho
-    hm = Image.new("L", im.size, 0)
-    ImageDraw.Draw(hm).rounded_rectangle(VOL_CAP, radius=22, fill=255)
-    tilted = hm.rotate(-ang, resample=Image.BICUBIC, center=C).point(lambda v: 255 if v > 20 else 0).filter(ImageFilter.MaxFilter(5))
-    rx0, ry0, rx1, ry1 = VOL_REGION
-    a = np.asarray(im.crop(VOL_REGION)).astype(np.float32)
-    m = np.asarray(tilted.crop(VOL_REGION)) > 0
-    known = ~m
-    acc = a.copy()
-    acc[m] = 0
-    sh = ((1, 0), (-1, 0), (0, 1), (0, -1))
-    for it in range(600):
-        k = known.astype(np.float32)
-        s = sum(np.roll(acc * k[..., None], d, (0, 1)) for d in sh)
-        n = sum(np.roll(k, d, (0, 1)) for d in sh)
-        upd = m & (n > 0)
-        acc[upd] = s[upd] / n[upd][..., None]
-        if it < 300:
-            known = known | upd
-    out = im.copy()
-    out.paste(Image.fromarray(acc.clip(0, 255).astype(np.uint8), "RGBA"), (rx0, ry0))
-    # cola a capsula horizontal
-    dy = round(VOL_Y - (VOL_CAP[1] + VOL_CAP[3]) / 2)
-    ci = cap.crop((VOL_CAP[0] - 2, VOL_CAP[1] - 2, VOL_CAP[2] + 2, VOL_CAP[3] + 2))
-    cm = Image.new("L", ci.size, 0)
-    ImageDraw.Draw(cm).rounded_rectangle((2, 2, ci.width - 3, ci.height - 3), radius=22, fill=255)
-    out.paste(ci, (VOL_CAP[0] - 2, VOL_CAP[1] - 2 + dy), cm.filter(ImageFilter.GaussianBlur(1.0)))
-    box = (VOL_CAP[0], VOL_CAP[1] + dy, VOL_CAP[2], VOL_CAP[3] + dy)
-    return out, thumb, box, VOL_THUMB[1] + dy
-
-
 # ------------------------------------------------------------------ coordenadas (imagem original)
 PLAYER = {
     "screen_text": (585, 262, 1000, 382),      # tempo / musica / info (parte escura do vidro)
@@ -342,7 +282,9 @@ def build(theme):
     sc = SCALES["player"]
     im, mask = load("player")
     clean = im.copy()
-    clean, vol_thumb, vbox, vty = straighten_volume(clean)
+    vbox, vspan, (vcx, vcy), vr = PLAYER["volume"]
+    vol_thumb = im.crop((vcx - vr - 6, vcy - vr + 4, vcx + vr + 6, vcy + vr - 4))
+    tile_h(clean, vbox, vspan)
     sx0, sy0, sx1, sy1 = PLAYER["seek"]
     dline = ImageDraw.Draw(clean)
     my = (sy0 + sy1) // 2
@@ -365,7 +307,7 @@ def build(theme):
       <text id="info" display="songinfo" x="{tx}" y="{ty + round(th_ * 0.74)}" w="{tw}" h="{round(th_ * 0.2)}" font="Arial" fontsize="{max(6, round(th_ * 0.15))}" color="{cs(P['accent'])}" align="center"/>
       <vis id="vis" x="{R(vx0, off[0], sc)}" y="{R(vy0, off[1], sc)}" w="{round((vx1 - vx0) * sc)}" h="{round((vy1 - vy0) * sc)}" mode="1" bandwidth="thin" falloff="2" peakfalloff="2" {bands_attr()} colorbandpeak="{cs(P['bright'])}"/>
       <slider id="seek" action="SEEK" x="{R(sx0, off[0], sc)}" y="{R(sy0 - 7, off[1], sc)}" w="{round((sx1 - sx0) * sc)}" h="{round(30 * sc)}" thumb="{seek_ids[0]}" hoverThumb="{seek_ids[1]}" downThumb="{seek_ids[2]}"/>
-      <slider id="volume" action="VOLUME" x="{R(vbox[0] + 5, off[0], sc)}" y="{R(vty, off[1], sc)}" w="{round((vbox[2] - vbox[0] - 10) * sc)}" h="{round(vol_thumb.height * sc)}" thumb="{vol_ids[0]}" hoverThumb="{vol_ids[1]}" downThumb="{vol_ids[2]}"/>
+      <slider id="volume" action="VOLUME" x="{R(vbox[0], off[0], sc)}" y="{R(vcy - vr + 4, off[1], sc)}" w="{round((vbox[2] - vbox[0]) * sc)}" h="{round((2 * vr - 8) * sc)}" thumb="{vol_ids[0]}" hoverThumb="{vol_ids[1]}" downThumb="{vol_ids[2]}"/>
 {chr(10).join(buttons_xml("player", PLAYER, im, mask, off, sc))}
     </layout>
   </container>''')
