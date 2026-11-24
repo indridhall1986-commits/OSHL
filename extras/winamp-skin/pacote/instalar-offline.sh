@@ -96,7 +96,7 @@ say "[7/7] Ligando o skin aos temas do OSHL..."
 cat > "$HOME/.local/bin/oshl-winamp-tema" <<'EOF'
 #!/usr/bin/env bash
 # Define o skin do Winamp conforme o tema do OSHL (vale na proxima abertura do Winamp).
-# Uso: oshl-winamp-tema [tema] [hud|plastic|bio] [normal|metade]   (estilo e tamanho ficam salvos)
+# Uso: oshl-winamp-tema [tema|lime] [hud|plastic|bio] [normal|metade]   (estilo e tamanho ficam salvos)
 CONF="${XDG_CONFIG_HOME:-$HOME/.config}/oshl"
 T="${1:-$(cat "$CONF/theme" 2>/dev/null || echo tron)}"
 mkdir -p "$CONF"
@@ -106,10 +106,11 @@ E="$(cat "$CONF/winamp-estilo" 2>/dev/null || echo hud)"
 Z="$(cat "$CONF/winamp-tamanho" 2>/dev/null || echo metade)"
 case "$T" in
     tron) S=TRON ;; matrix) S=MATRIZ ;; reator) S=REATOR ;;
-    alerta) S=ALERTA ;; ambar) S=AMBAR ;; neon) S=NEON ;; *) S=MATRIZ ;;
+    alerta) S=ALERTA ;; ambar) S=AMBAR ;; neon) S=NEON ;; lime|orbital) S=LIME ;; *) S=MATRIZ ;;
 esac
 [ "$Z" = metade ] && S="$S-50"
 case "$E" in plastic) PREFIX=OSHL-Plastic ;; bio) PREFIX=OSHL-Bio ;; *) PREFIX=OSHL-HUD ;; esac
+[ "$S" = LIME ] && [ "$PREFIX" != OSHL-Bio ] && S=MATRIZ      # LIME so existe no estilo Bio
 P="$HOME/.local/share/oshl-winamp/prefix/drive_c"
 INI="$(find "$P" -iname winamp.ini -path '*Winamp*' 2>/dev/null | head -n 1)"
 if [ -z "$INI" ]; then

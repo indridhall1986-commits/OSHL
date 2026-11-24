@@ -18,8 +18,8 @@ sed -n "/^cat > \"\$HOME\/.local\/bin\/oshl-winamp-tema\" <<'EOF'$/,/^EOF$/p" in
     | sed '1d;$d' > "$HOME/.local/bin/oshl-winamp-tema"
 chmod +x "$HOME/.local/bin/oshl-winamp-tema"
 
-"$HOME/.local/bin/oshl-winamp-tema" "" hud metade
+"$HOME/.local/bin/oshl-winamp-tema" lime bio normal
 echo
 echo "PRONTO. Feche e abra o Winamp para ver o skin novo."
-echo "Trocar estilo: oshl-winamp-tema neon hud   |   oshl-winamp-tema neon plastic"
+echo "Trocar: oshl-winamp-tema lime bio   |   oshl-winamp-tema neon bio metade   |   oshl-winamp-tema neon hud"
 read -r -p "Enter para fechar..." _
