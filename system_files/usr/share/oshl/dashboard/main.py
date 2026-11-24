@@ -173,6 +173,24 @@ class Backend(QObject):
 
     pivots = Property("QVariant", _get_pivots, constant=True)
 
+    menuStyleChanged = Signal()
+
+    def _get_menu_style(self):
+        try:
+            v = open(os.path.join(CONF, "dashboard-estilo"), encoding="utf-8").read().strip()
+        except OSError:
+            v = ""
+        return v if v in ("vidro", "classico") else "classico"
+
+    menuStyle = Property(str, _get_menu_style, notify=menuStyleChanged)
+
+    @Slot()
+    def toggleMenuStyle(self):
+        new = "vidro" if self._get_menu_style() == "classico" else "classico"
+        os.makedirs(CONF, exist_ok=True)
+        open(os.path.join(CONF, "dashboard-estilo"), "w", encoding="utf-8").write(new)
+        self.menuStyleChanged.emit()
+
     def _get_wall(self):
         return QUrl.fromLocalFile(self._wall).toString() if self._wall else ""
 

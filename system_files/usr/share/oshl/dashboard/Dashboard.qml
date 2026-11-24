@@ -24,8 +24,9 @@ Window {
     Behavior on scroll { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
     property int parentIdx: 0
     readonly property var model: level === 0 ? menus : (menus[parentIdx].items || [])
-    readonly property real coreSize: height * 0.60
-    readonly property real coreR: coreSize * 0.41
+    readonly property bool vidro: backend.menuStyle === "vidro"      // estilo VIDRO (1a versao) ou CLASSICO
+    readonly property real coreSize: height * (vidro ? 0.50 : 0.60)
+    readonly property real coreR: coreSize * (vidro ? 0.49 : 0.41)
     readonly property real coreCx: width * 0.30
     readonly property real coreCy: height * 0.52
 
@@ -44,6 +45,8 @@ Window {
         if (e.items) {
             parentIdx = cur; level = 1; cur = 0
             backend.sound("select"); switchAnim.restart()
+        } else if (e.action === "style") {
+            backend.sound("select"); backend.toggleMenuStyle(); toast.show("ESTILO: " + (win.vidro ? "VIDRO" : "CLASSICO"))
         } else if (e.action === "widgets") {
             backend.sound("select"); backend.showAllWidgets(); toast.show("WIDGETS VISIVEIS")
         } else if (e.cmd) {
@@ -130,6 +133,7 @@ Window {
             else if (ev.key === Qt.Key_Return || ev.key === Qt.Key_Enter || ev.key === Qt.Key_Right || ev.key === Qt.Key_Space) win.activate()
             else if (ev.key === Qt.Key_Escape || ev.key === Qt.Key_Backspace || ev.key === Qt.Key_Left) win.back()
             else if (ev.key === Qt.Key_W || ev.key === Qt.Key_Y) backend.nextWallpaper()
+            else if (ev.key === Qt.Key_E) { backend.toggleMenuStyle(); toast.show("ESTILO: " + (win.vidro ? "VIDRO" : "CLASSICO")) }
             else return
             ev.accepted = true
         }
@@ -188,14 +192,14 @@ Window {
                 Image {                      // brilho pulsando atras do vidro
                     anchors.centerIn: parent
                     width: parent.width * 1.12; height: parent.height * 1.12
-                    source: backend.asset("m4/core.png")
+                    source: backend.asset(win.vidro ? "core.png" : "m4/core.png")
                     layer.enabled: true
                     layer.effect: MultiEffect { blurEnabled: true; blur: 1.0; blurMax: 64; brightness: 0.25 }
                     opacity: 0.3
                 }
                 Image {
                     id: coreImg
-                    anchors.fill: parent; source: backend.asset("m4/core.png"); fillMode: Image.PreserveAspectFit
+                    anchors.fill: parent; source: backend.asset(win.vidro ? "core.png" : "m4/core.png"); fillMode: Image.PreserveAspectFit
                 }
             }
         }
@@ -312,8 +316,8 @@ Window {
                         id: bubble
                         tint: win.pal.tint; tintColor: win.pal.accent
                         width: ent.bs; height: ent.bs
-                        source: backend.asset(ent.active ? "m4/socket-sel.png" : "m4/socket.png")
-                        opacity: ent.active ? 1.0 : 0.85
+                        source: backend.asset(win.vidro ? "bubble.png" : (ent.active ? "m4/socket-sel.png" : "m4/socket.png"))
+                        opacity: ent.active ? 1.0 : (win.vidro ? 0.75 : 0.85)
                     }
 
                     // conector (fio com presilhas) do soquete ate a placa
@@ -322,15 +326,17 @@ Window {
                         source: backend.asset("m4/link.png")
                         x: ent.bs * 0.82; width: 62 * win.u + ent.bs * 0.22; height: width * 205 / 1211
                         y: ent.bs / 2 - height * 0.62
+                        visible: !win.vidro
                         opacity: ent.active ? 1.0 : 0.75
                     }
                     // placa do menu
                     Item {
                         id: pill
-                        width: 420 * win.u; height: width * 318 / 2031      // proporcao da arte da placa
+                        width: (win.vidro ? 480 : 420) * win.u; height: win.vidro ? 67 * win.u : width * 318 / 2031
                         readonly property real ph: height
-                        x: ent.bs + 62 * win.u
-                        y: ent.bs / 2 - height * 0.59                        // corpo da placa alinhado ao soquete
+                        readonly property real body: win.vidro ? 0.5 : 0.59                 // centro do corpo da placa
+                        x: ent.bs + (win.vidro ? 18 : 62) * win.u
+                        y: ent.bs / 2 - height * body
                         transformOrigin: Item.Left
                         scale: ent.active ? 1.08 : 1.0
                         Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
@@ -340,15 +346,15 @@ Window {
                         Tinted {
                             tint: win.pal.tint; tintColor: win.pal.accent
                             anchors.fill: parent
-                            source: backend.asset(ent.active ? "m4/plate-sel.png" : "m4/plate.png")
-                            opacity: ent.active ? 1.0 : 0.9
+                            source: backend.asset(win.vidro ? "pill.png" : (ent.active ? "m4/plate-sel.png" : "m4/plate.png"))
+                            opacity: ent.active ? 1.0 : (win.vidro ? 0.5 : 0.9)
                             Behavior on opacity { NumberAnimation { duration: 150 } }
                         }
                         Text {
-                            anchors.verticalCenter: parent.top; anchors.verticalCenterOffset: pill.height * 0.59
-                            x: pill.width * 0.1
+                            anchors.verticalCenter: parent.top; anchors.verticalCenterOffset: pill.height * pill.body
+                            x: win.vidro ? pill.height * 0.7 : pill.width * 0.1
                             text: ent.modelData.label + (ent.modelData.items ? "  >" : "")
-                            color: ent.active ? "#1a2600" : win.pal.bright
+                            color: ent.active ? (win.vidro ? "white" : "#1a2600") : win.pal.bright
                             font.family: win.fam; font.pixelSize: 25 * win.u; font.bold: true; font.letterSpacing: 3 * win.u
                         }
                     }

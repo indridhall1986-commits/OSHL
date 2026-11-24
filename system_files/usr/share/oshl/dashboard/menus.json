@@ -70,6 +70,10 @@
         "action": "widgets"
       },
       {
+        "label": "ESTILO DO MENU",
+        "action": "style"
+      },
+      {
         "label": "TERMINAL",
         "cmd": "konsole"
       },
