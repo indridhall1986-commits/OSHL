@@ -159,6 +159,20 @@ def states(img):
     return out
 
 
+def blend_edges(img, ref, px=4):
+    """Garante que a borda do recorte seja IDENTICA ao fundo: transicao suave de px pixels."""
+    w, h = img.size
+    m = Image.new("L", (w, h), 0)
+    if w > 2 * px and h > 2 * px:
+        ImageDraw.Draw(m).rectangle((px, px, w - 1 - px, h - 1 - px), fill=255)
+        m = m.filter(ImageFilter.GaussianBlur(px / 2))
+        m = ImageChops.multiply(m, Image.new("L", (w, h), 0).point(lambda v: 255).crop((0, 0, w, h)))
+        edge = Image.new("L", (w, h), 255)
+        ImageDraw.Draw(edge).rectangle((0, 0, w - 1, h - 1), outline=0, width=1)
+        m = ImageChops.multiply(m, edge)
+    return Image.composite(img.convert("RGBA"), ref.convert("RGBA"), m)
+
+
 def scaled(img, sc):
     return img.resize((max(1, round(img.width * sc)), max(1, round(img.height * sc))), Image.LANCZOS)
 
@@ -207,6 +221,7 @@ def build(theme):
     img_dir = os.path.join(out_dir, "img")
     os.makedirs(img_dir)
     bitmaps, sections = [], []
+    STATE = {}
 
     def save(name, im):
         im.save(os.path.join(img_dir, name + ".png"))
@@ -219,26 +234,43 @@ def build(theme):
         return im, mask
 
     def finish_bg(name, clean, mask, sc):
-        """Aplica a mascara, recorta no contorno; devolve (id, deslocamento, largura, altura)."""
+        """Aplica a mascara, recorta no contorno e reduz. Devolve tambem a transformacao T,
+        para os estados dos botoes passarem EXATAMENTE pelo mesmo processo (sem desalinhar)."""
         bbox = mask.getbbox()
-        body = clean.copy()
-        body.putalpha(mask.point(lambda v: int(v * ALPHA)))
-        body = body.crop(bbox)
-        bid = save(name, scaled(body, sc))
-        return bid, bbox[:2], round(body.width * sc), round(body.height * sc)
+        alpha = mask.point(lambda v: int(v * ALPHA))
+
+        def T(img):
+            b = img.copy()
+            b.putalpha(alpha)
+            return scaled(b.crop(bbox), sc)
+        base = T(clean)
+        bid = save(name, base)
+        STATE["T"], STATE["base"], STATE["clean"], STATE["mask"] = T, base, clean, mask
+        return bid, bbox[:2], base.width, base.height
 
     def R(v, off, sc):
         return round((v - off) * sc)
 
     def buttons_xml(prefix, spec, im, mask, off, sc):
+        """Cada estado = fundo inteiro com SO este botao alterado, reduzido pela mesma T e
+        recortado na mesma posicao do fundo: o estado normal fica identico ao fundo."""
+        T, base, clean = STATE["T"], STATE["base"], STATE["clean"]
         lines = []
         for bid, (box, action, param, tip) in spec["buttons"].items():
-            crop = im.crop(box)
+            crop = clean.crop(box)
             crop.putalpha(ImageChops.multiply(crop.getchannel("A"), mask.crop(box)))
-            ids = [save(f"{prefix}.{bid}.{st}", scaled(v, sc)) for st, v in zip(("n", "h", "d"), states(crop))]
+            _n, h, d = states(crop)
+            x0, y0 = R(box[0], off[0], sc), R(box[1], off[1], sc)
+            x1, y1 = R(box[2], off[0], sc), R(box[3], off[1], sc)
+            imgs = [base.crop((x0, y0, x1, y1))]
+            for v in (h, d):
+                full = clean.copy()
+                full.paste(v.convert("RGB"), box[:2])
+                imgs.append(blend_edges(T(full).crop((x0, y0, x1, y1)), imgs[0]))
+            ids = [save(f"{prefix}.{bid}.{st}", v) for st, v in zip(("n", "h", "d"), imgs)]
             par = f' param="{param}"' if param else ""
-            lines.append(f'      <button id="{prefix}.{bid}" action="{action}"{par} x="{R(box[0], off[0], sc)}" '
-                         f'y="{R(box[1], off[1], sc)}" image="{ids[0]}" hoverImage="{ids[1]}" downImage="{ids[2]}" tooltip="{tip}"/>')
+            lines.append(f'      <button id="{prefix}.{bid}" action="{action}"{par} x="{x0}" y="{y0}" '
+                         f'image="{ids[0]}" hoverImage="{ids[1]}" downImage="{ids[2]}" tooltip="{tip}"/>')
         return lines
 
     def bands_attr():

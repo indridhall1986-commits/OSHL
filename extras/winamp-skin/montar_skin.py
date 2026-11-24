@@ -202,6 +202,20 @@ def states(img):
     return out
 
 
+def blend_edges(img, ref, px=4):
+    """Garante que a borda do recorte seja IDENTICA ao fundo: transicao suave de px pixels."""
+    w, h = img.size
+    m = Image.new("L", (w, h), 0)
+    if w > 2 * px and h > 2 * px:
+        ImageDraw.Draw(m).rectangle((px, px, w - 1 - px, h - 1 - px), fill=255)
+        m = m.filter(ImageFilter.GaussianBlur(px / 2))
+        m = ImageChops.multiply(m, Image.new("L", (w, h), 0).point(lambda v: 255).crop((0, 0, w, h)))
+        edge = Image.new("L", (w, h), 255)
+        ImageDraw.Draw(edge).rectangle((0, 0, w - 1, h - 1), outline=0, width=1)
+        m = ImageChops.multiply(m, edge)
+    return Image.composite(img.convert("RGBA"), ref.convert("RGBA"), m)
+
+
 def scaled(img):
     return img.resize((max(1, s(img.width)), max(1, s(img.height))), Image.LANCZOS)
 
@@ -243,13 +257,21 @@ def build(theme):
         bitmaps.append(f'    <bitmap id="{skin}.{name}" file="img/{name}.png"/>')
         return f"{skin}.{name}"
 
-    def button_xml(spec, im, prefix):
+    def button_xml(spec, im, prefix, clean=None):
+        """Estados recortados do fundo inteiro reduzido do MESMO jeito (sem desalinhar)."""
         lines = []
         panel = spec["panel"]
+        clean = im if clean is None else clean
+        base = scaled(panel_image(clean, panel))
         for bid, (box, action, param, tip) in spec["buttons"].items():
-            ids = [save(f"{prefix}.{bid}.{st}", scaled(v))
-                   for st, v in zip(("n", "h", "d"), states(im.crop(box).convert("RGBA")))]
-            x0, y0, _x1, _y1 = rel(box, panel)
+            _n, h, d = states(clean.crop(box).convert("RGBA"))
+            x0, y0, x1, y1 = rel(box, panel)
+            imgs = [base.crop((x0, y0, x1, y1))]
+            for v in (h, d):
+                full = clean.copy()
+                full.paste(v.convert("RGB"), box[:2])
+                imgs.append(blend_edges(scaled(panel_image(full, panel)).crop((x0, y0, x1, y1)), imgs[0]))
+            ids = [save(f"{prefix}.{bid}.{st}", v) for st, v in zip(("n", "h", "d"), imgs)]
             p = f' param="{param}"' if param else ""
             lines.append(f'      <button id="{prefix}.{bid}" action="{action}"{p} x="{x0}" y="{y0}" '
                          f'image="{ids[0]}" hoverImage="{ids[1]}" downImage="{ids[2]}" tooltip="{tip}"/>')
@@ -264,6 +286,7 @@ def build(theme):
         thumbs[key] = circle_crop(im, cx, cy, r)
         tile_h(clean, (box[0], box[1] - 10, box[2], box[3] + 10), span)
     pnl = PLAYER["panel"]
+    clean_player = clean
     bg = save("player.bg", scaled(panel_image(clean, pnl)))
     W, H = s(pnl[2] - pnl[0]), s(pnl[3] - pnl[1])
     dx0, dy0, dx1, dy1 = rel(PLAYER["display"], pnl)
@@ -290,7 +313,7 @@ def build(theme):
       <text id="info" display="songinfo" x="{dx0 + 20}" y="{dy0 + int(dh * 0.78)}" w="{dx1 - dx0 - 40}" h="{int(dh * 0.18)}" font="Arial" fontsize="{int(dh * 0.15)}" color="{c(P['accent'])}" align="left"/>
       <vis id="vis" x="{vx0 + 6}" y="{vy0 + 6}" w="{vx1 - vx0 - 12}" h="{vy1 - vy0 - 12}" mode="1" bandwidth="wide" falloff="2" peakfalloff="2" {" ".join(bands)} colorbandpeak="{c(P['bright'])}"/>
 {chr(10).join(sliders)}
-{chr(10).join(button_xml(PLAYER, im, "player"))}
+{chr(10).join(button_xml(PLAYER, im, "player", clean_player))}
     </layout>
   </container>''')
 
@@ -304,6 +327,7 @@ def build(theme):
     for x, ky in zip(xs, EQ["knobs_y"]):
         erase_eq_band(clean, x, ky, y0, y1)
     pnl = EQ["panel"]
+    clean_eq = clean
     bg = save("eq.bg", scaled(panel_image(clean, pnl)))
     W, H = s(pnl[2] - pnl[0]), s(pnl[3] - pnl[1])
     k_ids = [save(f"eq.knob.{st}", scaled(v)) for st, v in zip(("n", "h", "d"), states(knob))]
@@ -321,7 +345,7 @@ def build(theme):
       <layer id="eq.bg" x="0" y="0" image="{bg}" move="1"/>
       <eqvis id="eqvis" x="{cx0 + 8}" y="{cy0 + 8}" w="{cx1 - cx0 - 16}" h="{cy1 - cy0 - 16}" colortop="{c(P['bright'])}" colormiddle="{c(P['accent'])}" colorbottom="{c(P['accent'])}" colorpreamp="{c(P['dim'])}"/>
 {chr(10).join(eq_sliders)}
-{chr(10).join(button_xml(EQ, im, "eq"))}
+{chr(10).join(button_xml(EQ, im, "eq", clean_eq))}
     </layout>
   </container>''')
 
