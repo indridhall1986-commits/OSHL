@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Dashboard OSHL
+Comment=Painel em tela cheia com jogos, musica, arquivos e sistema (funciona com controle)
+Exec=oshl-dashboard
+Icon=oshl-dashboard
+Categories=System;Game;
+Terminal=false

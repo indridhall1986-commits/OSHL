@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Abre o Dashboard OSHL (tela cheia; mouse, teclado e controle). Esc ou B fecha.
+exec /usr/bin/python3 /usr/share/oshl/dashboard/main.py "$@"

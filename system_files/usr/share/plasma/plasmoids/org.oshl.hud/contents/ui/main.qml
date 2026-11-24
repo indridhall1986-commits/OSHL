@@ -491,7 +491,7 @@ PlasmoidItem {
                 { label: "VIDEO", cmd: "vlc" },
                 { label: "JOGOS", cmd: "steam" },
                 { label: "NAVEGADOR", cmd: "oshl-browser" },
-                { label: "BUSCAR", cmd: "krunner" },
+                { label: "DASHBOARD", cmd: "oshl-dashboard" },
                 { label: "ATUALIZAR", cmd: "oshl-atualizar" },
                 { label: "CONFIG", cmd: "systemsettings" }
             ]

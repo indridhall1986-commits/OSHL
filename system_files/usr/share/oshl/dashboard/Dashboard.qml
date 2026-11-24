@@ -1,0 +1,314 @@
+import QtQuick
+import QtQuick.Window
+import QtQuick.Shapes
+import QtQuick.Effects
+
+// Dashboard OSHL: nucleo de vidro + menu de esferas e capsulas sobre a malha orbital.
+Window {
+    id: win
+    width: 1920
+    height: 1080
+    visible: true
+    visibility: previewMode ? Window.Windowed : Window.FullScreen
+    flags: previewMode ? Qt.Window : Qt.FramelessWindowHint
+    color: "black"
+    title: "Dashboard OSHL"
+
+    readonly property var pal: backend.palette
+    readonly property string fam: backend.fontFamily
+    readonly property real u: Math.min(width / 1920, height / 1080)
+    readonly property var menus: backend.menus
+    property int level: 0
+    property int cur: 0
+    property int parentIdx: 0
+    readonly property var model: level === 0 ? menus : (menus[parentIdx].items || [])
+    readonly property real coreSize: height * 0.62
+    readonly property real coreR: coreSize * 0.30
+    readonly property real coreCx: width * 0.30
+    readonly property real coreCy: height * 0.52
+
+    function al(c, a) { var q = Qt.lighter(c, 1.0); return Qt.rgba(q.r, q.g, q.b, a) }
+
+    function move(d) {
+        if (!model.length) return
+        cur = (cur + d + model.length) % model.length
+        backend.sound("move")
+    }
+    function activate() {
+        var e = model[cur]
+        if (!e) return
+        if (e.items) {
+            parentIdx = cur; level = 1; cur = 0
+            backend.sound("select"); switchAnim.restart()
+        } else if (e.cmd) {
+            backend.sound("select")
+            backend.launch(e.cmd)
+            quitTimer.start()
+        }
+    }
+    function back() {
+        if (level === 1) {
+            level = 0; cur = parentIdx
+            backend.sound("back"); switchAnim.restart()
+        } else {
+            backend.sound("back")
+            quitTimer.start()
+        }
+    }
+
+    Timer { id: quitTimer; interval: 260; onTriggered: backend.quit() }
+    Timer {
+        interval: 2500; running: previewMode
+        onTriggered: win.contentItem.grabToImage(function (r) { r.saveToFile(previewPath); backend.quit() })
+    }
+
+    Connections {
+        target: backend
+        function onPadUp() { win.move(-1) }
+        function onPadDown() { win.move(1) }
+        function onPadA() { win.activate() }
+        function onPadB() { win.back() }
+        function onPadRight() { win.activate() }
+        function onPadLeft() { win.back() }
+    }
+
+    Item {
+        anchors.fill: parent
+        focus: true
+        Keys.onPressed: function (ev) {
+            if (ev.key === Qt.Key_Up) win.move(-1)
+            else if (ev.key === Qt.Key_Down) win.move(1)
+            else if (ev.key === Qt.Key_Return || ev.key === Qt.Key_Enter || ev.key === Qt.Key_Right || ev.key === Qt.Key_Space) win.activate()
+            else if (ev.key === Qt.Key_Escape || ev.key === Qt.Key_Backspace || ev.key === Qt.Key_Left) win.back()
+            else return
+            ev.accepted = true
+        }
+
+        // ================= cena (fundo, malha, nucleo) - tingida nos temas nao verdes
+        Item {
+            id: scene
+            anchors.fill: parent
+            layer.enabled: win.pal.tint
+            layer.effect: MultiEffect { colorization: 1.0; colorizationColor: win.pal.accent }
+
+            Image { anchors.fill: parent; source: backend.asset("bg.png"); fillMode: Image.PreserveAspectCrop }
+
+            Image {
+                readonly property real d: Math.hypot(win.width, win.height) * 1.05
+                width: d; height: d
+                x: win.coreCx - d / 2; y: win.coreCy - d / 2
+                source: backend.asset("grid-a.png")
+                opacity: 0.9
+                RotationAnimator on rotation { from: 0; to: 360; duration: 260000; loops: Animation.Infinite; running: !previewMode }
+            }
+            Image {
+                readonly property real d: Math.hypot(win.width, win.height) * 1.35
+                width: d; height: d
+                x: win.coreCx - d / 2; y: win.coreCy - d / 2
+                source: backend.asset("grid-b.png")
+                opacity: 0.8
+                RotationAnimator on rotation { from: 360; to: 0; duration: 420000; loops: Animation.Infinite; running: !previewMode }
+            }
+
+            Item {
+                id: coreItem
+                width: win.coreSize; height: win.coreSize
+                x: win.coreCx - width / 2; y: win.coreCy - height / 2
+                scale: 0.6
+                opacity: 0
+                Component.onCompleted: { intro.start(); backend.sound("open") }
+                ParallelAnimation {
+                    id: intro
+                    NumberAnimation { target: coreItem; property: "scale"; to: 1.0; duration: previewMode ? 1 : 900; easing.type: Easing.OutBack }
+                    NumberAnimation { target: coreItem; property: "opacity"; to: 1.0; duration: previewMode ? 1 : 700 }
+                }
+                Image {
+                    anchors.fill: parent; source: backend.asset("rings.png")
+                    RotationAnimator on rotation { from: 0; to: 360; duration: 40000; loops: Animation.Infinite; running: !previewMode }
+                }
+                Image {                      // fitas de energia girando dentro do vidro
+                    anchors.fill: parent; source: backend.asset("swirl.png")
+                    RotationAnimator on rotation { from: 0; to: 360; duration: 14000; loops: Animation.Infinite; running: !previewMode }
+                }
+                Image {
+                    anchors.fill: parent; anchors.margins: win.coreSize * 0.12; source: backend.asset("swirl.png")
+                    opacity: 0.7; rotation: 60
+                    RotationAnimator on rotation { from: 420; to: 60; duration: 9000; loops: Animation.Infinite; running: !previewMode }
+                }
+                Image {
+                    id: coreImg
+                    anchors.fill: parent; source: backend.asset("core.png")
+                    SequentialAnimation on scale {
+                        loops: Animation.Infinite; running: !previewMode
+                        NumberAnimation { to: 1.035; duration: 1800; easing.type: Easing.InOutSine }
+                        NumberAnimation { to: 1.0; duration: 1800; easing.type: Easing.InOutSine }
+                    }
+                }
+            }
+        }
+
+        // ================= titulo e relogio
+        Column {
+            x: 90 * win.u; y: 60 * win.u
+            spacing: 4 * win.u
+            Text {
+                text: "OSHL"
+                color: win.al(win.pal.accent, 0.8)
+                font.family: win.fam; font.pixelSize: 22 * win.u; font.letterSpacing: 8 * win.u
+            }
+            Text {
+                id: title
+                text: win.level === 0 ? "PAINEL" : win.menus[win.parentIdx].label
+                color: win.pal.bright
+                font.family: win.fam; font.pixelSize: 64 * win.u; font.bold: true; font.letterSpacing: 4 * win.u
+                layer.enabled: true
+                layer.effect: MultiEffect { shadowEnabled: true; shadowColor: win.pal.accent; shadowBlur: 0.8; shadowHorizontalOffset: 0; shadowVerticalOffset: 0 }
+            }
+        }
+        Text {
+            id: clock
+            anchors.right: parent.right; anchors.rightMargin: 90 * win.u
+            y: 70 * win.u
+            color: win.pal.bright
+            font.family: win.fam; font.pixelSize: 40 * win.u; font.letterSpacing: 3 * win.u
+            text: Qt.formatTime(new Date(), "hh:mm")
+            Timer { interval: 5000; running: true; repeat: true; onTriggered: clock.text = Qt.formatTime(new Date(), "hh:mm") }
+        }
+
+        // ================= menu em arco ao redor do nucleo
+        Item {
+            id: menuLayer
+            anchors.fill: parent
+            transform: Translate { id: menuShift; x: 0 }
+            ParallelAnimation {
+                id: switchAnim
+                NumberAnimation { target: menuLayer; property: "opacity"; from: 0; to: 1; duration: 320 }
+                NumberAnimation { target: menuShift; property: "x"; from: 60 * win.u; to: 0; duration: 320; easing.type: Easing.OutCubic }
+            }
+
+            Repeater {
+                id: rep
+                model: win.model
+                delegate: Item {
+                    id: ent
+                    required property var modelData
+                    required property int index
+                    readonly property bool active: index === win.cur
+                    readonly property int n: rep.count
+                    readonly property real ang: n <= 1 ? 0 : (-0.60 + 1.20 * index / (n - 1))
+                    readonly property real rad: win.coreR * 1.95
+                    property real bs: (active ? 88 : 70) * win.u
+                    readonly property real bx: win.coreCx + rad * Math.cos(ang)
+                    readonly property real by: win.coreCy + rad * Math.sin(ang)
+                    x: bx - bs / 2
+                    y: by - bs / 2
+                    width: bs + 24 * win.u + pill.width
+                    height: bs
+                    Behavior on bs { NumberAnimation { duration: 140 } }
+
+                    // fio curvo do nucleo ate a esfera
+                    Shape {
+                        z: -1
+                        preferredRendererType: Shape.CurveRenderer
+                        ShapePath {
+                            strokeColor: win.al(win.pal.accent, ent.active ? 0.85 : 0.35)
+                            strokeWidth: (ent.active ? 2.4 : 1.4) * win.u
+                            fillColor: "transparent"
+                            startX: win.coreCx + win.coreR * 1.05 * Math.cos(ent.ang) - ent.x
+                            startY: win.coreCy + win.coreR * 1.05 * Math.sin(ent.ang) - ent.y
+                            PathQuad {
+                                x: ent.bs / 2 - ent.bs / 2 * 0.9; y: ent.bs / 2
+                                controlX: (win.coreCx + win.coreR * 1.5 * Math.cos(ent.ang * 0.4)) - ent.x
+                                controlY: (win.coreCy + win.coreR * 1.5 * Math.sin(ent.ang * 1.6)) - ent.y
+                            }
+                        }
+                    }
+
+                    Image {
+                        id: bubble
+                        width: ent.bs; height: ent.bs
+                        source: backend.asset("bubble.png")
+                        opacity: ent.active ? 1.0 : 0.75
+                    }
+
+                    // capsula com ponta cortada
+                    Item {
+                        id: pill
+                        readonly property real ph: 58 * win.u
+                        width: 560 * win.u; height: ph
+                        x: ent.bs + 18 * win.u
+                        y: (ent.bs - ph) / 2
+                        layer.enabled: ent.active
+                        layer.effect: MultiEffect { shadowEnabled: true; shadowColor: win.pal.accent; shadowBlur: 0.9; shadowHorizontalOffset: 0; shadowVerticalOffset: 0; shadowScale: 1.04 }
+                        Shape {
+                            anchors.fill: parent
+                            preferredRendererType: Shape.CurveRenderer
+                            ShapePath {
+                                strokeColor: win.al(win.pal.accent, ent.active ? 1.0 : 0.75)
+                                strokeWidth: 2 * win.u
+                                fillGradient: LinearGradient {
+                                    x1: 0; y1: 0; x2: 0; y2: pill.ph
+                                    GradientStop { position: 0; color: ent.active ? win.al(win.pal.bright, 0.92) : win.al(win.pal.accent, 0.20) }
+                                    GradientStop { position: 0.5; color: ent.active ? win.al(win.pal.accent, 0.85) : win.al(win.pal.accent, 0.07) }
+                                    GradientStop { position: 1; color: ent.active ? win.al(win.pal.accent, 0.7) : win.al(win.pal.dim, 0.30) }
+                                }
+                                startX: pill.ph / 2; startY: 0
+                                PathLine { x: pill.width - pill.ph * 0.8; y: 0 }
+                                PathLine { x: pill.width; y: pill.ph }
+                                PathLine { x: pill.ph / 2; y: pill.ph }
+                                PathArc { x: pill.ph / 2; y: 0; radiusX: pill.ph / 2; radiusY: pill.ph / 2; direction: PathArc.Clockwise }
+                            }
+                        }
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            x: pill.ph * 0.7
+                            text: ent.modelData.label + (ent.modelData.items ? "  >" : "")
+                            color: ent.active ? win.pal.bg : win.pal.bright
+                            font.family: win.fam; font.pixelSize: 28 * win.u; font.bold: true; font.letterSpacing: 3 * win.u
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onEntered: if (win.cur !== ent.index) { win.cur = ent.index; backend.sound("move") }
+                        onClicked: win.activate()
+                    }
+                }
+            }
+        }
+
+        // ================= dicas de botoes (A / B)
+        Row {
+            anchors.right: parent.right; anchors.rightMargin: 90 * win.u
+            anchors.bottom: parent.bottom; anchors.bottomMargin: 60 * win.u
+            spacing: 50 * win.u
+            Repeater {
+                model: [{ k: "B", t: win.level === 0 ? "SAIR" : "VOLTAR", f: function () { win.back() } },
+                        { k: "A", t: "SELECIONAR", f: function () { win.activate() } }]
+                Row {
+                    required property var modelData
+                    spacing: 14 * win.u
+                    Item {
+                        width: 54 * win.u; height: 54 * win.u
+                        Image { anchors.fill: parent; anchors.margins: -12 * win.u; source: backend.asset("bubble.png") }
+                        Text {
+                            anchors.centerIn: parent
+                            text: modelData.k
+                            color: win.pal.bg
+                            font.family: win.fam; font.pixelSize: 26 * win.u; font.bold: true
+                        }
+                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: modelData.f() }
+                    }
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: modelData.t
+                        color: win.pal.bright
+                        font.family: win.fam; font.pixelSize: 24 * win.u; font.letterSpacing: 3 * win.u
+                    }
+                }
+            }
+        }
+    }
+}

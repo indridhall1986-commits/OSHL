@@ -43,6 +43,12 @@ for f in /usr/share/applications/vlc.desktop /usr/share/applications/org.videola
            -e 's/^Icon=.*/Icon=oshl-video/' "$f"
 done
 
+# ---------- Dashboard OSHL (PySide6 + leitura de controle) e fonte Orbitron ----------
+dnf5 -y install python3-pyside6 python3-evdev
+mkdir -p /usr/share/fonts/oshl
+curl -fL -o /usr/share/fonts/oshl/Orbitron.ttf     "https://github.com/google/fonts/raw/main/ofl/orbitron/Orbitron%5Bwght%5D.ttf"
+fc-cache -f /usr/share/fonts/oshl || true
+
 # ---------- Temas OSHL (cores KDE, Konsole e papeis de parede) ----------
 python3 /ctx/gen-themes.py /
 
@@ -81,5 +87,5 @@ firewall-offline-cmd --set-default-zone=public
 
 # ---------- Servicos do OSHL ----------
 chmod +x /usr/libexec/oshl-firstboot /usr/libexec/oshl-hud-stats \
-         /usr/bin/oshl-temas /usr/bin/oshl-atualizar
+         /usr/bin/oshl-temas /usr/bin/oshl-atualizar /usr/bin/oshl-dashboard
 systemctl enable oshl-firstboot.service

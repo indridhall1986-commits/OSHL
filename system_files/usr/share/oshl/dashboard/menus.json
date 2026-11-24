@@ -1,0 +1,26 @@
+[
+  {"label": "JOGOS", "items": [
+    {"label": "STEAM", "cmd": "steam"},
+    {"label": "HEROIC", "cmd": "flatpak run com.heroicgameslauncher.hgl"},
+    {"label": "LUTRIS", "cmd": "lutris"}
+  ]},
+  {"label": "MUSICA", "items": [
+    {"label": "WINAMP", "cmd": "$HOME/.local/bin/winamp"},
+    {"label": "MUSICA OSHL", "cmd": "strawberry"},
+    {"label": "VIDEO", "cmd": "vlc"}
+  ]},
+  {"label": "ARQUIVOS", "items": [
+    {"label": "PASTA PESSOAL", "cmd": "dolphin"},
+    {"label": "DOWNLOADS", "cmd": "dolphin \"$(xdg-user-dir DOWNLOAD)\""},
+    {"label": "MUSICAS", "cmd": "dolphin \"$(xdg-user-dir MUSIC)\""},
+    {"label": "IMAGENS", "cmd": "gwenview \"$(xdg-user-dir PICTURES)\""}
+  ]},
+  {"label": "NAVEGADOR", "cmd": "oshl-browser"},
+  {"label": "SISTEMA", "items": [
+    {"label": "TEMAS", "cmd": "oshl-temas"},
+    {"label": "TERMINAL", "cmd": "konsole"},
+    {"label": "ATUALIZAR", "cmd": "oshl-atualizar"},
+    {"label": "CONFIGURACOES", "cmd": "systemsettings"},
+    {"label": "DESLIGAR", "cmd": "qdbus6 org.kde.LogoutPrompt /LogoutPrompt promptShutDown || qdbus org.kde.LogoutPrompt /LogoutPrompt promptShutDown"}
+  ]}
+]
