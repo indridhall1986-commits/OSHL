@@ -1,0 +1,11 @@
+[Settings]
+FallbackTheme=breeze-dark
+
+[ContrastEffect]
+enabled=true
+contrast=0.9
+intensity=0.9
+saturation=1.6
+
+[BlurBehindEffect]
+enabled=true

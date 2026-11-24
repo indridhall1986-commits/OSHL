@@ -1,0 +1,15 @@
+{
+    "KPlugin": {
+        "Id": "OSHL-neon",
+        "Name": "OSHL NEON",
+        "Description": "Barra e menus de vidro do OSHL",
+        "Authors": [
+            {
+                "Name": "OSHL"
+            }
+        ],
+        "License": "GPL-2.0+",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

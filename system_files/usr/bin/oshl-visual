@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# Aplica o visual OSHL da area de trabalho no tema atual:
+#   janelas de vidro com botoes-bolha, barra e menus de vidro, icones so na cor do tema,
+#   esfera no botao Iniciar, relogio em Orbitron e (com --area) os widgets OSHL na area de trabalho.
+# Uso: oshl-visual           (aplica estilo, janelas e icones do tema atual)
+#      oshl-visual --area    (tambem arruma a barra e troca o HUD pelos widgets OSHL)
+set -u
+CONF="${XDG_CONFIG_HOME:-$HOME/.config}"
+T="$(cat "$CONF/oshl/theme" 2>/dev/null || echo orbital)"
+[ -d "/usr/share/plasma/desktoptheme/OSHL-$T" ] || T=orbital
+QDBUS="$(command -v qdbus6 || command -v qdbus || echo true)"
+say() { echo "OSHL: $*"; }
+
+# ---------- icones so na cor do tema (o tema "OSHL" do sistema e o ORBITAL; outras cores vao para a pasta do usuario)
+ICON_USER="${XDG_DATA_HOME:-$HOME/.local/share}/icons/OSHL"
+if [ "$T" = orbital ]; then
+    rm -rf "$ICON_USER"
+else
+    if [ "$(cat "$ICON_USER/.tema" 2>/dev/null)" != "$T" ]; then
+        say "pintando os icones na cor $T (uns segundos)..."
+        notify-send -a OSHL -i preferences-desktop-icons "Pintando os icones na cor do tema..." 2>/dev/null || true
+        /usr/libexec/oshl-icones "$T" "$ICON_USER" && echo "$T" > "$ICON_USER/.tema"
+    fi
+fi
+kwriteconfig6 --file kdeglobals --group Icons --key Theme breeze-dark
+/usr/libexec/plasma-changeicons OSHL >/dev/null 2>&1 || kwriteconfig6 --file kdeglobals --group Icons --key Theme OSHL
+
+# ---------- janelas: vidro + capsula do titulo + botoes-bolha (minimizar, maximizar, fechar)
+kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key library org.kde.kwin.aurorae
+kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key theme "__aurorae__svg__OSHL-$T"
+kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft ""
+kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnRight "IAX"
+kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key BorderSize Normal
+kwriteconfig6 --file kwinrc --group Plugins --key blurEnabled true
+kwriteconfig6 --file kwinrc --group Plugins --key contrastEnabled true
+kwriteconfig6 --file kdeglobals --group WM --key activeFont "Orbitron,10,-1,5,600,0,0,0,0,0"
+"$QDBUS" org.kde.KWin /KWin reconfigure >/dev/null 2>&1
+
+# ---------- barra, menu Iniciar e janelinhas de vidro
+plasma-apply-desktoptheme "OSHL-$T" >/dev/null 2>&1
+
+# ---------- barra de tarefas e widgets da area de trabalho
+if [ "${1:-}" = "--area" ]; then
+    "$QDBUS" org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
+var ps = panels();
+for (var i = 0; i < ps.length; i++) {
+    var p = ps[i];
+    if (p.location !== "bottom") continue;
+    p.height = 60;
+    var ws = p.widgets();
+    for (var j = 0; j < ws.length; j++) {
+        var w = ws[j];
+        if (w.type === "org.kde.plasma.kickoff") {
+            w.currentConfigGroup = ["General"]; w.writeConfig("icon", "oshl-orb");
+        } else if (w.type === "org.kde.plasma.digitalclock") {
+            w.currentConfigGroup = ["Appearance"];
+            w.writeConfig("fontFamily", "Orbitron"); w.writeConfig("autoFontAndSize", "false");
+            w.writeConfig("fontSize", "11"); w.writeConfig("showDate", "true");
+        }
+    }
+}
+var ds = desktops();
+for (var k = 0; k < ds.length; k++) {
+    var d = ds[k], g = screenGeometry(d.screen), have = {};
+    var dw = d.widgets();
+    for (var n = 0; n < dw.length; n++) {
+        if (dw[n].type === "org.oshl.hud") dw[n].remove(); else have[dw[n].type] = true;
+    }
+    if (k > 0) continue;
+    if (!have["org.oshl.menu"]) d.addWidget("org.oshl.menu", 40, Math.round(g.height * 0.18), 760, 480);
+    if (!have["org.oshl.relogio"]) d.addWidget("org.oshl.relogio", g.width - 340, 20, 300, 333);
+    if (!have["org.oshl.sistema"]) d.addWidget("org.oshl.sistema", g.width - 330, 380, 290, 379);
+    if (!have["org.oshl.gpu"]) d.addWidget("org.oshl.gpu", 40, g.height - 60 - 190, 340, 167);
+}' >/dev/null 2>&1 && say "barra e widgets arrumados"
+fi
+say "visual aplicado (tema $T)"

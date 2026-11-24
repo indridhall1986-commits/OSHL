@@ -52,6 +52,13 @@ fc-cache -f /usr/share/fonts/oshl || true
 # ---------- Temas OSHL (cores KDE, Konsole e papeis de parede) ----------
 python3 /ctx/gen-themes.py /
 
+# ---------- Visual OSHL: icones so na cor do tema (Papirus recolorido; o padrao e o ORBITAL) ----------
+# Janelas (Aurorae) e estilo do Plasma ja vem prontos em system_files (gerados por gen-visual.py).
+dnf5 -y install papirus-icon-theme
+chmod +x /usr/libexec/oshl-icones /usr/bin/oshl-visual
+/usr/libexec/oshl-icones orbital /usr/share/icons/OSHL
+gtk-update-icon-cache -f /usr/share/icons/OSHL >/dev/null 2>&1 || true
+
 # ---------- Audio profissional ----------
 dnf5 -y install \
     pipewire-jack-audio-connection-kit \

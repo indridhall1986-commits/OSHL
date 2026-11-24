@@ -1,0 +1,106 @@
+#!/usr/bin/python3
+"""Gera o tema de icones "OSHL": o Papirus inteiro com TODAS as cores trocadas por tons da cor do tema
+(cada cor vira um tom entre o escuro e o claro do tema, conforme a luminosidade). Nada de logos coloridos.
+Uso: oshl-icones <tema> <pasta-destino>
+  Imagem (build):  oshl-icones orbital /usr/share/icons/OSHL
+  Troca de tema:   oshl-icones neon ~/.local/share/icons/OSHL   (oshl-temas faz isso sozinho)"""
+import json
+import os
+import re
+import shutil
+import sys
+
+SOURCES = os.environ.get("OSHL_PAPIRUS", "/usr/share/icons/Papirus:/usr/share/icons/Papirus-Dark").split(os.pathsep if os.name == "nt" else ":")   # o Dark por cima
+THEMES = os.environ.get("OSHL_THEMES", "/usr/share/oshl/themes.json")
+
+
+def rgb(h):
+    h = h.lstrip("#")
+    if len(h) == 3:
+        h = "".join(c * 2 for c in h)
+    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def lerp(a, b, t):
+    return tuple(round(a[i] + (b[i] - a[i]) * t) for i in range(3))
+
+
+def main():
+    key, dest = sys.argv[1], os.path.abspath(os.path.expanduser(sys.argv[2]))
+    th = json.load(open(THEMES, encoding="utf-8")).get(key)
+    if not th:
+        sys.exit(f"tema desconhecido: {key}")
+    dark = lerp(rgb(th["bg"]), rgb(th["dim"]), 0.45)
+    mid, light = rgb(th["accent"]), rgb(th["bright"])
+    cache = {}
+
+    def mapc(r, g, b):
+        k = (r, g, b)
+        if k not in cache:
+            lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+            c = lerp(dark, mid, min(1, lum / 0.55)) if lum < 0.55 else lerp(mid, light, (lum - 0.55) / 0.45)
+            cache[k] = "#%02x%02x%02x" % c
+        return cache[k]
+
+    hexre = re.compile(r"#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})(?![0-9a-fA-F])")
+    rgbre = re.compile(r"rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(,\s*[\d.]+\s*)?\)")
+    namre = re.compile(r"((?:fill|stroke|stop-color|color)\s*[:=]\s*\"?)(white|black)\b")
+
+    def recolor(svg):
+        svg = hexre.sub(lambda m: mapc(*rgb(m.group(1))), svg)
+        svg = rgbre.sub(lambda m: mapc(int(m.group(1)), int(m.group(2)), int(m.group(3))), svg)
+        return namre.sub(lambda m: m.group(1) + mapc(*((255,) * 3 if m.group(2) == "white" else (0,) * 3)), svg)
+
+    srcs = [s for s in SOURCES if os.path.isdir(s)]
+    if not srcs:
+        sys.exit("Papirus nao encontrado em /usr/share/icons")
+    tmp = dest + ".novo"
+    shutil.rmtree(tmp, ignore_errors=True)
+    os.makedirs(tmp)
+    n = 0
+    for src in srcs:
+        for root, dirs, files in os.walk(src):
+            rel = os.path.relpath(root, src)
+            out = os.path.join(tmp, rel)
+            os.makedirs(out, exist_ok=True)
+            for name in dirs + files:
+                p, q = os.path.join(root, name), os.path.join(out, name)
+                if os.path.islink(p):
+                    if os.path.lexists(q):
+                        if os.path.isdir(q) and not os.path.islink(q):
+                            continue
+                        os.remove(q)
+                    target = os.readlink(p)
+                    real = os.path.realpath(p)
+                    for s in srcs:                    # link para outro tema Papirus: aponta para a copia OSHL
+                        if real.startswith(s + os.sep):
+                            target = os.path.relpath(os.path.join(tmp, os.path.relpath(real, s)), out)
+                            break
+                    os.symlink(target, q)
+                elif name in files:
+                    if os.path.lexists(q):
+                        os.remove(q)
+                    if name.endswith(".svg"):
+                        with open(p, encoding="utf-8", errors="replace") as fh:
+                            data = recolor(fh.read())
+                        with open(q, "w", encoding="utf-8") as fh:
+                            fh.write(data)
+                        n += 1
+                    elif name != "index.theme":
+                        shutil.copy2(p, q)
+    # index.theme: o do Papirus, com outro nome
+    with open(os.path.join(srcs[0], "index.theme"), encoding="utf-8") as fh:
+        idx = fh.read()
+    idx = re.sub(r"(?m)^Name=.*$", "Name=OSHL", idx, count=1)
+    idx = re.sub(r"(?m)^Comment=.*$", f"Comment=Icones OSHL ({th['name']})", idx, count=1)
+    idx = re.sub(r"(?m)^Inherits=.*$", "Inherits=breeze-dark,hicolor", idx, count=1)
+    with open(os.path.join(tmp, "index.theme"), "w", encoding="utf-8") as fh:
+        fh.write(idx)
+    shutil.rmtree(dest, ignore_errors=True)
+    os.replace(tmp, dest)
+    os.utime(dest)
+    print(f"OSHL: {n} icones recoloridos ({th['name']}) em {dest}")
+
+
+if __name__ == "__main__":
+    main()

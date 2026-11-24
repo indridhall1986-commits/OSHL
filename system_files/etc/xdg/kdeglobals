@@ -7,10 +7,10 @@ smallestReadableFont=Fira Mono,8,-1,5,50,0,0,0,0,0
 fixed=Fira Mono,10,-1,5,50,0,0,0,0,0
 
 [WM]
-activeFont=Fira Mono,10,-1,5,50,0,0,0,0,0
+activeFont=Orbitron,10,-1,5,600,0,0,0,0,0
 
 [Icons]
-Theme=breeze-dark
+Theme=OSHL
 
 [KDE]
 LookAndFeelPackage=org.oshl.tron

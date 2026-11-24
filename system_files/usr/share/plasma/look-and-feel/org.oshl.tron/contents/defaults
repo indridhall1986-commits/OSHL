@@ -2,20 +2,22 @@
 ColorScheme=OSHLTron
 
 [kdeglobals][Icons]
-Theme=breeze-dark
+Theme=OSHL
 
 [kdeglobals][KDE]
 widgetStyle=Breeze
 
 [plasmarc][Theme]
-name=default
+name=OSHL-tron
 
 [kcminputrc][Mouse]
 cursorTheme=breeze_cursors
 
 [kwinrc][org.kde.kdecoration2]
-library=org.kde.breeze
-theme=Breeze
+library=org.kde.kwin.aurorae
+theme=__aurorae__svg__OSHL-tron
+ButtonsOnLeft=
+ButtonsOnRight=IAX
 
 [kwinrc][WindowSwitcher]
 LayoutName=thumbnail_grid
