@@ -9,7 +9,7 @@ import shutil
 import sys
 import zipfile
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageChops, ImageDraw, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 METADE = "--metade" in sys.argv
@@ -65,7 +65,13 @@ class Canvas:
         self.d.text((x * self.m, y * self.m), s, font=font(int(size * self.m)), fill=color, anchor=anchor)
 
     def out(self):
-        return self.im.resize((self.w * K, self.h * K), Image.LANCZOS)
+        im = self.im
+        if getattr(self, "opaque", None):           # janela: alfa 100% em toda a area
+            r = Image.new("L", im.size, 0)
+            ImageDraw.Draw(r).rectangle(self.p(*self.opaque), fill=255)
+            im = im.copy()
+            im.putalpha(ImageChops.lighter(im.getchannel("A"), r))
+        return im.resize((self.w * K, self.h * K), Image.LANCZOS)
 
 
 def brackets(c, x0, y0, x1, y1, col, ln=8, w=1.4):
@@ -89,6 +95,7 @@ def panel(c, P, x0, y0, x1, y1, title, tag=""):
 
 def window_base(P, w, h, title, tag):
     c = Canvas(w, h)
+    c.opaque = (1, 1, w - 2, h - 2)
     c.rect(1, 1, w - 2, h - 2, fill=P["bg"] + (int(255 * BG_ALPHA),), outline=P["accent"] + (110,), width=0.8)
     for y in range(4, h - 4, 3):                      # linhas de varredura discretas
         c.line(2, y, w - 3, y, P["accent"] + (7,), 0.5)
