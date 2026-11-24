@@ -18,6 +18,7 @@ SRC_ROOT = os.path.join(HERE, "fonte-bio")
 METADE = "--metade" in sys.argv
 SUFIXO = "-50" if METADE else ""
 ALPHA = 1.0    # opaco (a transparencia fica por conta da opcao do Winamp)
+MAKI_SRC = os.path.join(HERE, "maki", "standardframe.maki")   # copia do script de moldura do Winamp
 
 # escala por modulo (normal / metade): o player e o EQ tem 1376 px, a playlist 1774 px
 SCALES = {"player": 0.5, "equalizador": 0.5, "playlist": 0.39}
@@ -346,12 +347,61 @@ def build(theme):
     sc = SCALES["playlist"]
     im, mask = load("playlist")
     bg, off, W, H = finish_bg("pl.bg", im, mask, sc)
+    base = STATE["base"]
+    # Moldura VAZADA: a playlist original do Winamp aparece no centro (janela padrao "Status"),
+    # e a moldura em volta e redefinida com pedacos da arte. O conteudo e posicionado pelo
+    # script standardframe.maki do proprio Winamp (copiado para dentro do skin).
     lx0, ly0, lx1, ly1 = PLAYLIST["list"]
-    sections.append(f'''  <container id="Pledit" name="Playlist Editor" dynamic="1" component="guid:{{45F3F7C1-A6F3-4ee6-A15E-125E92FC3F8D}}" default_x="{round(1376 * SCALES['player']) + 60}" default_y="40" default_visible="1">
-    <layout id="normal" desktopalpha="1" w="{W}" h="{H}">
-      <layer id="pl.bg" x="0" y="0" image="{bg}" move="1"/>
-      <component id="pl.list" x="{R(lx0, off[0], sc)}" y="{R(ly0, off[1], sc)}" w="{round((lx1 - lx0) * sc)}" h="{round((ly1 - ly0) * sc)}" noshowcmdbar="1" autoopen="1" autoclose="1" param="guid:{{45F3F7C1-A6F3-4ee6-A15E-125E92FC3F8D}}"/>
-{chr(10).join(buttons_xml("pl", PLAYLIST, im, mask, off, sc))}
+    L_, T_ = R(lx0, off[0], sc), R(ly0, off[1], sc)          # espessura esquerda / topo
+    Rr, Bb = W - R(lx1, off[0], sc), H - R(ly1, off[1], sc)  # espessura direita / base
+    cut = lambda v, o: R(v, o, sc)
+    TLW, TRX = cut(300, off[0]), cut(1440, off[0])            # topo: esquerda fixa | meio estica | direita fixa
+    BLW, BRX = cut(1400, off[0]), cut(1500, off[0])           # base: esquerda fixa (botoes) | meio estica | direita fixa
+    pieces = {
+        "tl": (0, 0, TLW, T_), "tm": (TLW, 0, TRX, T_), "tr": (TRX, 0, W, T_),
+        "l": (0, T_, L_, H - Bb), "r": (W - Rr, T_, W, H - Bb),
+        "bl": (0, H - Bb, BLW, H), "bm": (BLW, H - Bb, BRX, H), "br": (BRX, H - Bb, W, H),
+    }
+    pid = {k: save(f"pl.frame.{k}", base.crop(b)) for k, b in pieces.items()}
+    T, clean = STATE["T"], STATE["clean"]
+    fbtn = []
+    for bid, (box, action, param, tip) in PLAYLIST["buttons"].items():
+        crop = clean.crop(box)
+        crop.putalpha(ImageChops.multiply(crop.getchannel("A"), mask.crop(box)))
+        _n, hv, dv = states(crop)
+        x0, y0, x1, y1 = R(box[0], off[0], sc), R(box[1], off[1], sc), R(box[2], off[0], sc), R(box[3], off[1], sc)
+        imgs = [base.crop((x0, y0, x1, y1))]
+        for v in (hv, dv):
+            full = clean.copy()
+            full.paste(v.convert("RGB"), box[:2])
+            imgs.append(blend_edges(T(full).crop((x0, y0, x1, y1)), imgs[0]))
+        ids = [save(f"pl.{bid}.{st}", v) for st, v in zip(("n", "h", "d"), imgs)]
+        if y0 < T_:                      # botoes do topo (min/fechar): presos a direita
+            pos = f'x="{x0 - W}" relatx="1" y="{y0}"'
+        else:                            # botoes da base: presos embaixo, a esquerda
+            pos = f'x="{x0}" y="{y0 - H}" relaty="1"'
+        par = f' param="{param}"' if param else ""
+        fbtn.append(f'    <button id="pl.{bid}" action="{action}"{par} {pos} image="{ids[0]}" '
+                    f'hoverImage="{ids[1]}" downImage="{ids[2]}" tooltip="{tip}"/>')
+    sections.append(f'''  <groupdef id="wasabi.standardframe.statusbar" sysregion="1" xuitag="Wasabi:StandardFrame:Status">
+    <layer id="pl.tl" x="0" y="0" image="{pid['tl']}" move="1"/>
+    <layer id="pl.tm" x="{TLW}" y="0" w="{-(TLW + (W - TRX))}" relatw="1" h="{T_}" image="{pid['tm']}" move="1"/>
+    <layer id="pl.tr" x="{TRX - W}" relatx="1" y="0" image="{pid['tr']}" move="1"/>
+    <layer id="pl.l" x="0" y="{T_}" w="{L_}" h="{-(T_ + Bb)}" relath="1" image="{pid['l']}" move="1"/>
+    <layer id="pl.r" x="{-Rr}" relatx="1" y="{T_}" w="{Rr}" h="{-(T_ + Bb)}" relath="1" image="{pid['r']}" move="1"/>
+    <layer id="pl.bl" x="0" y="{-Bb}" relaty="1" image="{pid['bl']}" move="1"/>
+    <layer id="pl.bm" x="{BLW}" y="{-Bb}" relaty="1" w="{-(BLW + (W - BRX))}" relatw="1" h="{Bb}" image="{pid['bm']}" move="1"/>
+    <layer id="pl.br" x="{BRX - W}" relatx="1" y="{-Bb}" relaty="1" image="{pid['br']}" resize="bottomright"/>
+{chr(10).join(fbtn)}
+    <Wasabi:TitleBar id="wasabi.titlebar" x="{TLW}" y="1" w="1" h="1"/>
+    <LayoutStatus id="sysmenu.status" bg="0" x="0" y="0" w="1" h="1" includeonly="{{system}}"/>
+    <hideobject target="sysmenu.status"/>
+    <script id="standardframe.script" file="scripts/standardframe.maki" param="{L_},{T_},{-(L_ + Rr)},{-(T_ + Bb)},0,0,1,1"/>
+  </groupdef>
+
+  <container id="resizable_status" name=":componenttitle" dynamic="1" hold="@all@" default_x="{round(1376 * SCALES['player']) + 60}" default_y="40">
+    <layout id="normal" minimum_w="{W}" minimum_h="{H}" w="{W}" h="{H}">
+      <Wasabi:StandardFrame:Status id="wasabi.standardframe" x="0" y="0" w="0" h="0" relatw="1" relath="1" content="component.content.group"/>
     </layout>
   </container>''')
 
@@ -388,6 +438,13 @@ def build(theme):
 {chr(10).join(sections)}
 </WinampAbstractionLayer>
 '''
+    hx = lambda c: "#%02X%02X%02X" % c[:3]
+    with open(os.path.join(out_dir, "pledit.txt"), "w", encoding="ascii", newline="\r\n") as fh:   # cores da playlist
+        fh.write(f"[Text]\nNormal={hx(P['accent'])}\nCurrent={hx(P['bright'])}\n"
+                 f"NormalBG={hx(P['bg2'])}\nSelectedBG={hx(P['dim'])}\nFont=Arial\n")
+    sdir = os.path.join(out_dir, "scripts")                      # script da moldura padrao do Winamp
+    os.makedirs(sdir, exist_ok=True)
+    shutil.copy(MAKI_SRC, os.path.join(sdir, "standardframe.maki"))
     with open(os.path.join(out_dir, "skin.xml"), "w", encoding="utf-8", newline="\r\n") as fh:
         fh.write(xml)
     Image.open(os.path.join(img_dir, "player.bg.png")).save(os.path.join(out_dir, "screenshot.png"))
