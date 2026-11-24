@@ -72,6 +72,7 @@ Item {
     // rodinha: 1 passo por "clique"; aceita mouse comum (120 por clique) e rodinhas/touchpads finos
     WheelHandler {
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        acceptedModifiers: Qt.NoModifier            // Ctrl + rodinha fica livre (redimensionar o widget)
         property real acc: 0
         property real last: 0
         onWheel: function (ev) {
