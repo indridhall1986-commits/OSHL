@@ -282,9 +282,12 @@ def build(theme):
     sc = SCALES["player"]
     im, mask = load("player")
     clean = im.copy()
-    vbox, vspan, (vcx, vcy), vr = PLAYER["volume"]
-    vol_thumb = im.crop((vcx - vr - 6, vcy - vr + 4, vcx + vr + 6, vcy + vr - 4))
-    tile_h(clean, vbox, vspan)
+    # volume: trilho reto flutuando embaixo do player (ja desenhado na arte, ver fonte-bio/compor_player.py)
+    vinfo = json.load(open(os.path.join(SRC_ROOT, "original", "volume.json"), encoding="utf-8"))
+    vbox, vpad = vinfo["track"], vinfo["pad"]
+    vol_thumb = Image.open(os.path.join(SRC_ROOT, theme, "volume-puxador.png")).convert("RGBA")
+    vol_thumb.putalpha(Image.open(os.path.join(SRC_ROOT, "pecas", "volume-puxador-alfa.png")).convert("L"))
+    vty = (vbox[1] + vbox[3]) // 2 - vol_thumb.height // 2
     sx0, sy0, sx1, sy1 = PLAYER["seek"]
     dline = ImageDraw.Draw(clean)
     my = (sy0 + sy1) // 2
@@ -307,7 +310,7 @@ def build(theme):
       <text id="info" display="songinfo" x="{tx}" y="{ty + round(th_ * 0.74)}" w="{tw}" h="{round(th_ * 0.2)}" font="Arial" fontsize="{max(6, round(th_ * 0.15))}" color="{cs(P['accent'])}" align="center"/>
       <vis id="vis" x="{R(vx0, off[0], sc)}" y="{R(vy0, off[1], sc)}" w="{round((vx1 - vx0) * sc)}" h="{round((vy1 - vy0) * sc)}" mode="1" bandwidth="thin" falloff="2" peakfalloff="2" {bands_attr()} colorbandpeak="{cs(P['bright'])}"/>
       <slider id="seek" action="SEEK" x="{R(sx0, off[0], sc)}" y="{R(sy0 - 7, off[1], sc)}" w="{round((sx1 - sx0) * sc)}" h="{round(30 * sc)}" thumb="{seek_ids[0]}" hoverThumb="{seek_ids[1]}" downThumb="{seek_ids[2]}"/>
-      <slider id="volume" action="VOLUME" x="{R(vbox[0], off[0], sc)}" y="{R(vcy - vr + 4, off[1], sc)}" w="{round((vbox[2] - vbox[0]) * sc)}" h="{round((2 * vr - 8) * sc)}" thumb="{vol_ids[0]}" hoverThumb="{vol_ids[1]}" downThumb="{vol_ids[2]}"/>
+      <slider id="volume" action="VOLUME" x="{R(vbox[0] + vpad, off[0], sc)}" y="{R(vty, off[1], sc)}" w="{round((vbox[2] - vbox[0] - 2 * vpad) * sc)}" h="{round(vol_thumb.height * sc)}" thumb="{vol_ids[0]}" hoverThumb="{vol_ids[1]}" downThumb="{vol_ids[2]}"/>
 {chr(10).join(buttons_xml("player", PLAYER, im, mask, off, sc))}
     </layout>
   </container>''')
