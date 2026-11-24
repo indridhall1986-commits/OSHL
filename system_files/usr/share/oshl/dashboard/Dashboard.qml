@@ -188,7 +188,7 @@ Window {
                 Image {                      // brilho pulsando atras do vidro
                     anchors.centerIn: parent
                     width: parent.width * 1.12; height: parent.height * 1.12
-                    source: backend.asset("m3/core.png")
+                    source: backend.asset("m4/core.png")
                     layer.enabled: true
                     layer.effect: MultiEffect { blurEnabled: true; blur: 1.0; blurMax: 64; brightness: 0.25 }
                     SequentialAnimation on opacity {
@@ -200,7 +200,7 @@ Window {
                 }
                 Image {
                     id: coreImg
-                    anchors.fill: parent; source: backend.asset("m3/core.png"); fillMode: Image.PreserveAspectFit
+                    anchors.fill: parent; source: backend.asset("m4/core.png"); fillMode: Image.PreserveAspectFit
                     SequentialAnimation on scale {
                         loops: Animation.Infinite; running: !previewMode
                         NumberAnimation { to: 1.035; duration: 1800; easing.type: Easing.InOutSine }
@@ -322,17 +322,25 @@ Window {
                         id: bubble
                         tint: win.pal.tint; tintColor: win.pal.accent
                         width: ent.bs; height: ent.bs
-                        source: backend.asset(ent.active ? "m3/socket-sel.png" : "m3/socket.png")
+                        source: backend.asset(ent.active ? "m4/socket-sel.png" : "m4/socket.png")
                         opacity: ent.active ? 1.0 : 0.85
                     }
 
-                    // capsula com ponta cortada
+                    // conector (fio com presilhas) do soquete ate a placa
+                    Tinted {
+                        tint: win.pal.tint; tintColor: win.pal.accent
+                        source: backend.asset("m4/link.png")
+                        x: ent.bs * 0.82; width: 62 * win.u + ent.bs * 0.22; height: width * 205 / 1211
+                        y: ent.bs / 2 - height * 0.62
+                        opacity: ent.active ? 1.0 : 0.75
+                    }
+                    // placa do menu
                     Item {
                         id: pill
-                        readonly property real ph: 67 * win.u
-                        width: 480 * win.u; height: ph
-                        x: ent.bs + 18 * win.u
-                        y: (ent.bs - ph) / 2
+                        width: 420 * win.u; height: width * 318 / 2031      // proporcao da arte da placa
+                        readonly property real ph: height
+                        x: ent.bs + 62 * win.u
+                        y: ent.bs / 2 - height * 0.59                        // corpo da placa alinhado ao soquete
                         transformOrigin: Item.Left
                         scale: ent.active ? 1.08 : 1.0
                         Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
@@ -342,16 +350,16 @@ Window {
                         Tinted {
                             tint: win.pal.tint; tintColor: win.pal.accent
                             anchors.fill: parent
-                            source: backend.asset(ent.active ? "m3/plate-sel.png" : "m3/plate.png")
-                            opacity: ent.active ? 1.0 : 0.8
+                            source: backend.asset(ent.active ? "m4/plate-sel.png" : "m4/plate.png")
+                            opacity: ent.active ? 1.0 : 0.9
                             Behavior on opacity { NumberAnimation { duration: 150 } }
                         }
                         Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            x: pill.ph * 0.7
+                            anchors.verticalCenter: parent.top; anchors.verticalCenterOffset: pill.height * 0.59
+                            x: pill.width * 0.1
                             text: ent.modelData.label + (ent.modelData.items ? "  >" : "")
                             color: ent.active ? "#1a2600" : win.pal.bright
-                            font.family: win.fam; font.pixelSize: 28 * win.u; font.bold: true; font.letterSpacing: 3 * win.u
+                            font.family: win.fam; font.pixelSize: 25 * win.u; font.bold: true; font.letterSpacing: 3 * win.u
                         }
                     }
 
