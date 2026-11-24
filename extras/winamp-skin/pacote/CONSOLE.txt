@@ -50,11 +50,11 @@ Para fechar: Ctrl+C no terminal.
 ---------------------------------------------------------------------
  PASSO 6 - Tornar o Winamp o player padrao (o instalar.sh ja faz)
 ---------------------------------------------------------------------
-for m in audio/mpeg audio/mp4 audio/x-m4a audio/aac audio/flac audio/x-flac audio/ogg audio/x-vorbis+ogg audio/opus audio/x-wav audio/wav audio/x-ms-wma audio/x-mpegurl; do xdg-mime default winamp.desktop "$m"; done
+for m in audio/mpeg audio/mp4 audio/x-m4a audio/aac audio/flac audio/x-flac audio/ogg audio/x-vorbis+ogg audio/opus audio/x-wav audio/wav audio/x-ms-wma audio/x-mpegurl; do kwriteconfig6 --file mimeapps.list --group "Default Applications" --key "$m" "winamp.desktop;"; done
 
-Conferir (deve responder winamp.desktop):
+Conferir (deve responder winamp.desktop;):
 
-xdg-mime query default audio/mpeg
+kreadconfig6 --file mimeapps.list --group "Default Applications" --key audio/mpeg
 
 
 ---------------------------------------------------------------------
@@ -74,13 +74,27 @@ Ou um tema especifico (escolha UM):
 ~/.local/bin/oshl-winamp-tema neon
 
 
+---------------------------------------------------------------------
+ DIAGNOSTICO - se o Winamp nao abrir (erro "noexec filesystem?")
+---------------------------------------------------------------------
+Versao do Wine e estado do SELinux:
+
+wine --version
+getenforce
+
+Teste com o SELinux desligado TEMPORARIAMENTE (religar no final!):
+
+sudo setenforce 0
+~/.local/bin/winamp
+sudo setenforce 1
+
 =====================================================================
  EXTRAS
 =====================================================================
 
 Voltar para o player do OSHL (Musica OSHL):
 
-for m in audio/mpeg audio/mp4 audio/x-m4a audio/aac audio/flac audio/x-flac audio/ogg audio/x-vorbis+ogg audio/opus audio/x-wav audio/wav audio/x-ms-wma audio/x-mpegurl; do xdg-mime default org.strawberrymusicplayer.strawberry.desktop "$m"; done
+for m in audio/mpeg audio/mp4 audio/x-m4a audio/aac audio/flac audio/x-flac audio/ogg audio/x-vorbis+ogg audio/opus audio/x-wav audio/wav audio/x-ms-wma audio/x-mpegurl; do kwriteconfig6 --file mimeapps.list --group "Default Applications" --key "$m" "org.strawberrymusicplayer.strawberry.desktop;"; done
 
 Abrir uma musica no Winamp pelo terminal:
 

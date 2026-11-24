@@ -104,10 +104,13 @@ Categories=AudioVideo;Audio;Player;
 MimeType=audio/mpeg;audio/mp4;audio/x-m4a;audio/aac;audio/flac;audio/x-flac;audio/ogg;audio/x-vorbis+ogg;audio/opus;audio/x-wav;audio/wav;audio/x-ms-wma;audio/x-mpegurl;
 Terminal=false
 EOF
+# kwriteconfig6 (KDE) grava em ~/.config/mimeapps.list; o xdg-mime do OSHL depende do qtpaths, ausente
 for m in audio/mpeg audio/mp4 audio/x-m4a audio/aac audio/flac audio/x-flac audio/ogg \
          audio/x-vorbis+ogg audio/opus audio/x-wav audio/wav audio/x-ms-wma audio/x-mpegurl; do
-    xdg-mime default winamp.desktop "$m"
+    kwriteconfig6 --file mimeapps.list --group "Default Applications" --key "$m" "winamp.desktop;"
+    kwriteconfig6 --file mimeapps.list --group "Added Associations" --key "$m" "winamp.desktop;"
 done
+echo "   Player padrao de MP3: $(kreadconfig6 --file mimeapps.list --group 'Default Applications' --key audio/mpeg)"
 update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
 
 # 5. Skin do tema atual
