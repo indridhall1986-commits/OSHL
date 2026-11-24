@@ -21,7 +21,7 @@ Window {
     property int level: 0
     property int cur: 0
     property real scroll: cur                        // posicao animada da "roda" do menu
-    Behavior on scroll { NumberAnimation { duration: 380; easing.type: Easing.OutCubic } }
+    Behavior on scroll { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
     property int parentIdx: 0
     readonly property var model: level === 0 ? menus : (menus[parentIdx].items || [])
     readonly property real coreSize: height * 0.50
@@ -113,12 +113,15 @@ Window {
         id: dashRoot
         anchors.fill: parent
         focus: true
-        WheelHandler {                       // rodinha do mouse gira o menu (como o analogico)
+        WheelHandler {                       // rodinha: 1 passo por "clique", com pausa entre passos
             property real acc: 0
+            property real last: 0
             onWheel: function (ev) {
                 acc += ev.angleDelta.y
-                while (acc >= 120) { acc -= 120; win.move(-1) }
-                while (acc <= -120) { acc += 120; win.move(1) }
+                var now = Date.now()
+                if (Math.abs(acc) < 100 || now - last < 280) return
+                win.move(acc > 0 ? -1 : 1)
+                acc = 0; last = now
             }
         }
         Keys.onPressed: function (ev) {
@@ -294,8 +297,8 @@ Window {
                     required property int index
                     readonly property bool active: index === win.cur
                     readonly property int n: rep.count
-                    readonly property real ang: -0.12 + (index - win.scroll) * 0.29   // foco um pouco acima do meio
-                    opacity: Math.max(0, 1 - Math.max(0, Math.abs(ang + 0.12) - 0.82) / 0.3)
+                    readonly property real ang: -0.12 + (index - win.scroll) * 0.33   // foco um pouco acima do meio
+                    opacity: Math.max(0, 1 - Math.max(0, Math.abs(ang + 0.12) - 0.9) / 0.3)
                     visible: opacity > 0.01
                     readonly property real rad: win.coreR * 1.42
                     property real bs: (active ? 88 : 70) * win.u
@@ -366,8 +369,10 @@ Window {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onEntered: if (win.cur !== ent.index) { win.cur = ent.index; backend.sound("move") }
-                        onClicked: win.activate()
+                        onClicked: {                  // 1o clique: gira ate o foco; clique no item em foco: abre
+                            if (win.cur !== ent.index) { win.cur = ent.index; backend.sound("move") }
+                            else win.activate()
+                        }
                     }
                 }
             }
