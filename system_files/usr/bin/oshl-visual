@@ -36,6 +36,12 @@ kwriteconfig6 --file kwinrc --group Plugins --key contrastEnabled true
 kwriteconfig6 --file kdeglobals --group WM --key activeFont "Orbitron,10,-1,5,600,0,0,0,0,0"
 "$QDBUS" org.kde.KWin /KWin reconfigure >/dev/null 2>&1
 
+# ---------- interior das janelas (Kvantum): vale para programas abertos depois disso
+if [ -d "/usr/share/Kvantum/OSHL-$T" ]; then
+    kwriteconfig6 --file Kvantum/kvantum.kvconfig --group General --key theme "OSHL-$T"
+    kwriteconfig6 --file kdeglobals --group KDE --key widgetStyle kvantum
+fi
+
 # ---------- barra, menu Iniciar e janelinhas de vidro
 plasma-apply-desktoptheme "OSHL-$T" >/dev/null 2>&1
 

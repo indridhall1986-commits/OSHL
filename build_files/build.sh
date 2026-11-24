@@ -59,6 +59,10 @@ chmod +x /usr/libexec/oshl-icones /usr/bin/oshl-visual
 /usr/libexec/oshl-icones orbital /usr/share/icons/OSHL
 gtk-update-icon-cache -f /usr/share/icons/OSHL >/dev/null 2>&1 || true
 
+# Interior das janelas (Kvantum): vidro translucido, selecao e destaques na cor do tema
+dnf5 -y install kvantum
+python3 /ctx/gen-kvantum.py /
+
 # ---------- Audio profissional ----------
 dnf5 -y install \
     pipewire-jack-audio-connection-kit \
