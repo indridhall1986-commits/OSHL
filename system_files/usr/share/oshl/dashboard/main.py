@@ -68,6 +68,10 @@ class Backend(QObject):
     def _get_font(self):
         return self._font
 
+    def _get_test(self):
+        return bool(os.environ.get("OSHL_TESTE"))
+
+    testMode = Property(bool, _get_test, constant=True)
     palette = Property("QVariant", _get_pal, constant=True)
     menus = Property("QVariant", _get_menus, constant=True)
     fontFamily = Property(str, _get_font, constant=True)
@@ -84,6 +88,10 @@ class Backend(QObject):
     @Slot(str)
     def sound(self, name):
         wav = os.path.join(ASSETS, name + ".wav")
+        if os.path.exists(wav) and os.name == "nt":          # teste no Windows
+            import winsound
+            winsound.PlaySound(wav, winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_NODEFAULT)
+            return
         if os.path.exists(wav):
             for player in ("pw-play", "paplay", "aplay"):
                 try:

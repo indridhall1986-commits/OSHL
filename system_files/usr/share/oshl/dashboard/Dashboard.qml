@@ -42,6 +42,7 @@ Window {
             backend.sound("select"); switchAnim.restart()
         } else if (e.cmd) {
             backend.sound("select")
+            if (backend.testMode) { toast.show("ABRIRIA: " + e.label); return }
             backend.launch(e.cmd)
             quitTimer.start()
         }
@@ -57,6 +58,35 @@ Window {
     }
 
     Timer { id: quitTimer; interval: 260; onTriggered: backend.quit() }
+
+    // aviso do modo de teste (Windows): mostra o que seria aberto
+    Rectangle {
+        id: toast
+        z: 100
+        function show(msg) { toastText.text = msg; toastAnim.restart() }
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: parent.height * 0.86
+        width: toastText.implicitWidth + 60 * win.u; height: 64 * win.u
+        radius: height / 2
+        color: win.al(win.pal.bg, 0.85)
+        border.color: win.pal.accent; border.width: 2
+        opacity: 0
+        Text { id: toastText; anchors.centerIn: parent; color: win.pal.bright; font.family: win.fam; font.pixelSize: 26 * win.u; font.letterSpacing: 3 * win.u }
+        SequentialAnimation {
+            id: toastAnim
+            NumberAnimation { target: toast; property: "opacity"; to: 1; duration: 150 }
+            PauseAnimation { duration: 1400 }
+            NumberAnimation { target: toast; property: "opacity"; to: 0; duration: 400 }
+        }
+    }
+    Text {
+        visible: backend.testMode
+        z: 100
+        anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.margins: 30 * win.u
+        text: "MODO DE TESTE  -  ESC SAI"
+        color: win.al(win.pal.bright, 0.6)
+        font.family: win.fam; font.pixelSize: 18 * win.u; font.letterSpacing: 3 * win.u
+    }
     Timer {
         interval: 2500; running: previewMode
         onTriggered: win.contentItem.grabToImage(function (r) { r.saveToFile(previewPath); backend.quit() })
