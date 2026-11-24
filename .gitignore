@@ -2,3 +2,5 @@ output/
 *.iso
 __pycache__/
 *.pyc
+extras/winamp-skin/fonte/
+extras/winamp-skin/dist/
