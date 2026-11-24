@@ -48,7 +48,7 @@ EQ = {
     "buttons": {
         "eqon":    ((1503, 340, 1647, 430), "EQ_TOGGLE", "", "Liga/desliga EQ"),
         "eqauto":  ((1503, 453, 1647, 542), "EQ_AUTO", "", "Auto"),
-        "presets": ((1503, 572, 1647, 672), "EQ_PRESETS", "", "Presets"),
+        "presets": ((1503, 572, 1647, 672), "eq_reset", "", "Zerar equalizador"),
         "min":     ((1502, 54, 1568, 118), "MINIMIZE", "", "Minimizar"),
         "close":   ((1584, 54, 1648, 118), "CLOSE", "", "Fechar"),
     },
@@ -57,8 +57,13 @@ PLAYLIST = {
     "panel": (55, 30, 1720, 852),
     "list": (100, 140, 1608, 680),
     "buttons": {
-        "min":   ((1505, 50, 1572, 116), "MINIMIZE", "", "Minimizar"),
-        "close": ((1586, 50, 1652, 116), "CLOSE", "", "Fechar"),
+        "min":     ((1505, 50, 1572, 116), "MINIMIZE", "", "Minimizar"),
+        "close":   ((1586, 50, 1652, 116), "CLOSE", "", "Fechar"),
+        # Acoes existentes no Winamp (gen_ff.dll). Nao ha acao de skin para "remover da playlist".
+        "add":     ((450, 724, 593, 818), "eject", "", "Abrir arquivos"),
+        "dir":     ((817, 724, 960, 818), "eject_dir", "", "Abrir pasta"),
+        "shuffle": ((1000, 724, 1143, 818), "toggle_shuffle", "", "Aleatorio"),
+        "repeat":  ((1182, 724, 1327, 818), "toggle_repeat", "", "Repetir"),
     },
 }
 
