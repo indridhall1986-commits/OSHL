@@ -1,0 +1,47 @@
+=====================================================================
+ WINAMP VIA BOTTLES - PASSO A PASSO (precisa de internet 1 vez)
+ Colar no terminal: Ctrl+Shift+V | um comando de cada vez
+=====================================================================
+
+1. Religue a protecao (se ainda estiver desligada) e confira:
+
+sudo setenforce 1
+getenforce
+
+   (deve responder: Enforcing)
+
+2. Conecte o OSHL a internet (cabo de preferencia).
+
+3. Abra a pasta WINAMP-OSHL-PRONTO, aperte Shift+F4 e rode:
+
+bash instalar-bottles.sh
+
+   - Ele instala o Bottles, cria a garrafa "Winamp" e copia tudo.
+   - Se disser que o Bottles nao terminou a configuracao inicial:
+     abra o Bottles pelo menu Iniciar, conclua a tela de boas-vindas
+     (ele baixa os componentes), feche e rode o comando de novo.
+
+4. Abra o Winamp pelo menu Iniciar (a primeira vez demora).
+
+5. Funcionou? Pode desconectar a internet.
+
+---------------------------------------------------------------------
+ Uteis
+---------------------------------------------------------------------
+Trocar o skin (vale na proxima abertura do Winamp):
+
+~/.local/bin/oshl-winamp-tema neon
+
+   (tron, matrix, reator, alerta, ambar, neon)
+
+Abrir o Winamp pelo terminal (mostra erros):
+
+~/.local/bin/winamp
+
+Conferir o player padrao (deve responder winamp.desktop;):
+
+kreadconfig6 --file mimeapps.list --group "Default Applications" --key audio/mpeg
+
+IMPORTANTE: guarde as musicas na pasta Musicas. Por seguranca, o
+Bottles (quarentena) so consegue LER essa pasta.
+=====================================================================
