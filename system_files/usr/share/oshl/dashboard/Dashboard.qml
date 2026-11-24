@@ -202,7 +202,7 @@ Window {
                     y: by - bs / 2
                     width: bs + 24 * win.u + pill.width
                     height: bs
-                    Behavior on bs { NumberAnimation { duration: 140 } }
+                    Behavior on bs { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
 
                     // fio curvo do nucleo ate a esfera
                     Shape {
@@ -236,6 +236,10 @@ Window {
                         width: 560 * win.u; height: ph
                         x: ent.bs + 18 * win.u
                         y: (ent.bs - ph) / 2
+                        transformOrigin: Item.Left
+                        scale: ent.active ? 1.08 : 1.0
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
+                        transform: Translate { x: ent.active ? 14 * win.u : 0; Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } } }
                         layer.enabled: ent.active
                         layer.effect: MultiEffect { brightness: 0.15; shadowEnabled: true; shadowColor: win.pal.accent; shadowBlur: 1.0; shadowHorizontalOffset: 0; shadowVerticalOffset: 0; shadowOpacity: 0.7 }
                         Image {
