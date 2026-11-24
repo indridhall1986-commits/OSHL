@@ -24,8 +24,8 @@ Window {
     Behavior on scroll { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
     property int parentIdx: 0
     readonly property var model: level === 0 ? menus : (menus[parentIdx].items || [])
-    readonly property real coreSize: height * 0.50
-    readonly property real coreR: coreSize * 0.49
+    readonly property real coreSize: height * 0.60
+    readonly property real coreR: coreSize * 0.41
     readonly property real coreCx: width * 0.30
     readonly property real coreCy: height * 0.52
 
@@ -198,7 +198,7 @@ Window {
                 Image {                      // brilho pulsando atras do vidro
                     anchors.centerIn: parent
                     width: parent.width * 1.12; height: parent.height * 1.12
-                    source: backend.asset("core.png")
+                    source: backend.asset("m3/core.png")
                     layer.enabled: true
                     layer.effect: MultiEffect { blurEnabled: true; blur: 1.0; blurMax: 64; brightness: 0.25 }
                     SequentialAnimation on opacity {
@@ -210,7 +210,7 @@ Window {
                 }
                 Image {
                     id: coreImg
-                    anchors.fill: parent; source: backend.asset("core.png"); fillMode: Image.PreserveAspectFit
+                    anchors.fill: parent; source: backend.asset("m3/core.png"); fillMode: Image.PreserveAspectFit
                     SequentialAnimation on scale {
                         loops: Animation.Infinite; running: !previewMode
                         NumberAnimation { to: 1.035; duration: 1800; easing.type: Easing.InOutSine }
@@ -332,8 +332,8 @@ Window {
                         id: bubble
                         tint: win.pal.tint; tintColor: win.pal.accent
                         width: ent.bs; height: ent.bs
-                        source: backend.asset("bubble.png")
-                        opacity: ent.active ? 1.0 : 0.75
+                        source: backend.asset(ent.active ? "m3/socket-sel.png" : "m3/socket.png")
+                        opacity: ent.active ? 1.0 : 0.85
                     }
 
                     // capsula com ponta cortada
@@ -352,15 +352,15 @@ Window {
                         Tinted {
                             tint: win.pal.tint; tintColor: win.pal.accent
                             anchors.fill: parent
-                            source: backend.asset("pill.png")
-                            opacity: ent.active ? 1.0 : 0.5
+                            source: backend.asset(ent.active ? "m3/plate-sel.png" : "m3/plate.png")
+                            opacity: ent.active ? 1.0 : 0.8
                             Behavior on opacity { NumberAnimation { duration: 150 } }
                         }
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
                             x: pill.ph * 0.7
                             text: ent.modelData.label + (ent.modelData.items ? "  >" : "")
-                            color: ent.active ? "white" : win.al(win.pal.bright, 0.8)
+                            color: ent.active ? "#1a2600" : win.pal.bright
                             font.family: win.fam; font.pixelSize: 28 * win.u; font.bold: true; font.letterSpacing: 3 * win.u
                         }
                     }
