@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "OSHL" }],
+        "Category": "Application Launchers",
+        "Description": "Esfera OSHL com o menu em carrossel (jogos, musica, arquivos, navegador, sistema)",
+        "Icon": "start-here",
+        "Id": "org.oshl.menu",
+        "License": "GPL-2.0+",
+        "Name": "Menu OSHL",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

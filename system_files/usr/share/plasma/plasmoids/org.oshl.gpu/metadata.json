@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "OSHL" }],
+        "Category": "System Information",
+        "Description": "Uso, temperatura e memoria da placa de video",
+        "Icon": "video-display",
+        "Id": "org.oshl.gpu",
+        "License": "GPL-2.0+",
+        "Name": "Placa de video OSHL",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

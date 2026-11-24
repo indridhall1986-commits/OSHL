@@ -26,7 +26,7 @@ Item {
         x: h.cx - h.r * 0.92; y: h.cy - h.r * 0.92; width: h.r * 1.84; height: h.r * 1.84
         source: h.sphere
         SequentialAnimation on opacity {
-            loops: Animation.Infinite; running: !previewMode
+            loops: Animation.Infinite; running: typeof previewMode === "undefined" || !previewMode
             NumberAnimation { from: 0.25; to: 0.55; duration: 2400; easing.type: Easing.InOutSine }
             NumberAnimation { from: 0.55; to: 0.25; duration: 2400; easing.type: Easing.InOutSine }
         }

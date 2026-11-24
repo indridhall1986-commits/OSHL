@@ -317,6 +317,7 @@ def main():
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("backend", backend)
     engine.rootContext().setContextProperty("previewMode", bool(os.environ.get("OSHL_PREVIEW")))
+    engine.rootContext().setContextProperty("deskMode", os.environ.get("OSHL_MODO") == "area")
     engine.rootContext().setContextProperty("previewPath", os.environ.get("OSHL_PREVIEW", ""))
     sim = os.environ.get("OSHL_SIM_QML", "")
     engine.rootContext().setContextProperty("simPath", QUrl.fromLocalFile(sim).toString() if sim else "")

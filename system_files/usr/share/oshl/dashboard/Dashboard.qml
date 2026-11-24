@@ -25,10 +25,12 @@ Window {
     property int parentIdx: 0
     readonly property var model: level === 0 ? menus : (menus[parentIdx].items || [])
     readonly property bool vidro: backend.menuStyle === "vidro"      // estilo VIDRO (1a versao) ou CLASSICO
-    readonly property real coreSize: height * (vidro ? 0.50 : 0.60)
+    // deskMode: o Painel vira widgets soltos sobre a area de trabalho (previa do modo widget)
+    readonly property real coreSize: height * (vidro ? 0.50 : 0.60) * (deskMode ? 0.62 : 1.0)
     readonly property real coreR: coreSize * (vidro ? 0.49 : 0.41)
-    readonly property real coreCx: width * 0.30
-    readonly property real coreCy: height * 0.52
+    property real coreCx: width * (deskMode ? 0.17 : 0.30)
+    property real coreCy: height * (deskMode ? 0.40 : 0.52)
+    readonly property real mu: deskMode ? u * 0.72 : u            // escala do menu (menor no modo widget)
 
     function al(c, a) { var q = Qt.lighter(c, 1.0); return Qt.rgba(q.r, q.g, q.b, a) }
 
@@ -53,7 +55,7 @@ Window {
             backend.sound("select")
             if (backend.testMode) { toast.show("ABRIRIA: " + e.label); return }
             backend.launch(e.cmd)
-            quitTimer.start()
+            if (!deskMode) quitTimer.start()
         }
     }
     function back() {
@@ -62,7 +64,7 @@ Window {
             backend.sound("back"); switchAnim.restart()
         } else {
             backend.sound("back")
-            quitTimer.start()
+            if (!deskMode) quitTimer.start()
         }
     }
 
@@ -175,15 +177,23 @@ Window {
                 }
                 Connections { target: backend; function onWallpaperChanged() { bgHolder.swap(backend.wallpaper) } }
             }
-            Rectangle { anchors.fill: parent; color: "black"; opacity: 0.38 }   // escurece o fundo
+            Rectangle { anchors.fill: parent; color: "black"; opacity: deskMode ? 0 : 0.38 }   // escurece o fundo
 
             Item {
                 id: coreItem
+                visible: !deskMode || backend.widgets["menu"] !== false
                 width: win.coreSize; height: win.coreSize
                 x: win.coreCx - width / 2; y: win.coreCy - height / 2
                 scale: 0.6
                 opacity: 0
                 Component.onCompleted: { intro.start(); backend.sound("open") }
+                HoverHandler { id: hv_menu; enabled: deskMode }
+                DragHandler {                // modo widget: arrastar o menu pela esfera
+                    enabled: deskMode; target: null
+                    property real sx: 0; property real sy: 0
+                    onActiveChanged: if (active) { sx = win.coreCx; sy = win.coreCy }
+                    onTranslationChanged: { win.coreCx = sx + translation.x; win.coreCy = sy + translation.y }
+                }
                 ParallelAnimation {
                     id: intro
                     NumberAnimation { target: coreItem; property: "scale"; to: 1.0; duration: previewMode ? 1 : 900; easing.type: Easing.OutBack }
@@ -197,6 +207,7 @@ Window {
                     layer.effect: MultiEffect { blurEnabled: true; blur: 1.0; blurMax: 64; brightness: 0.25 }
                     opacity: 0.3
                 }
+                CloseBtn { visible: deskMode; show: hv_menu.hovered; pal: win.pal; onClicked: backend.setWidget("menu", false); z: 5 }
                 Image {
                     id: coreImg
                     anchors.fill: parent; source: backend.asset(win.vidro ? "core.png" : "m4/core.png"); fillMode: Image.PreserveAspectFit
@@ -206,6 +217,7 @@ Window {
 
         // ================= titulo e relogio
         Column {
+            visible: !deskMode
             x: 90 * win.u; y: 60 * win.u
             spacing: 4 * win.u
             Text {
@@ -228,6 +240,7 @@ Window {
         HoloClock {
             visible: backend.widgets["clock"] !== false
             HoverHandler { id: hv_clock }
+            DragHandler { enabled: deskMode }
             CloseBtn { show: hv_clock.hovered; pal: win.pal; onClicked: backend.setWidget("clock", false) }
             x: win.width - width - 60 * win.u; y: 18 * win.u
             width: 300 * win.u
@@ -237,6 +250,7 @@ Window {
         OrganicMonitor {
             visible: backend.widgets["monitor"] !== false
             HoverHandler { id: hv_monitor }
+            DragHandler { enabled: deskMode }
             CloseBtn { show: hv_monitor.hovered; pal: win.pal; onClicked: backend.setWidget("monitor", false) }
             x: win.width - width - 75 * win.u; y: 360 * win.u
             width: 290 * win.u
@@ -246,6 +260,7 @@ Window {
         InfoCard {
             visible: backend.widgets["gpu"] !== false
             HoverHandler { id: hv_gpu }
+            DragHandler { enabled: deskMode }
             CloseBtn { show: hv_gpu.hovered; pal: win.pal; onClicked: backend.setWidget("gpu", false) }
             x: 55 * win.u; y: win.height - parent.bottomReserve - height - 6 * win.u
             width: 340 * win.u
@@ -261,6 +276,7 @@ Window {
         Item {
             id: menuLayer
             anchors.fill: parent
+            visible: !deskMode || backend.widgets["menu"] !== false
             // mouse parado sobre o menu central: o Dashboard pega o foco e as setas do teclado giram o menu
             HoverHandler {
                 onHoveredChanged: if (hovered) { win.requestActivate(); dashRoot.forceActiveFocus() }
@@ -285,12 +301,12 @@ Window {
                     opacity: Math.max(0, 1 - Math.max(0, Math.abs(ang + 0.12) - 0.9) / 0.3)
                     visible: opacity > 0.01
                     readonly property real rad: win.coreR * 1.42
-                    property real bs: (active ? 88 : 70) * win.u
+                    property real bs: (active ? 88 : 70) * win.mu
                     readonly property real bx: win.coreCx + rad * Math.cos(ang)
                     readonly property real by: win.coreCy + rad * Math.sin(ang)
                     x: bx - bs / 2
                     y: by - bs / 2
-                    width: bs + 24 * win.u + pill.width
+                    width: bs + 24 * win.mu + pill.width
                     height: bs
                     Behavior on bs { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
 
@@ -300,7 +316,7 @@ Window {
                         preferredRendererType: Shape.CurveRenderer
                         ShapePath {
                             strokeColor: win.al(win.pal.accent, ent.active ? 0.85 : 0.35)
-                            strokeWidth: (ent.active ? 2.4 : 1.4) * win.u
+                            strokeWidth: (ent.active ? 2.4 : 1.4) * win.mu
                             fillColor: "transparent"
                             startX: win.coreCx + win.coreR * 1.05 * Math.cos(ent.ang) - ent.x
                             startY: win.coreCy + win.coreR * 1.05 * Math.sin(ent.ang) - ent.y
@@ -324,7 +340,7 @@ Window {
                     Tinted {
                         tint: win.pal.tint; tintColor: win.pal.accent
                         source: backend.asset("m4/link.png")
-                        x: ent.bs * 0.82; width: 62 * win.u + ent.bs * 0.22; height: width * 205 / 1211
+                        x: ent.bs * 0.82; width: 62 * win.mu + ent.bs * 0.22; height: width * 205 / 1211
                         y: ent.bs / 2 - height * 0.62
                         visible: !win.vidro
                         opacity: ent.active ? 1.0 : 0.75
@@ -332,15 +348,15 @@ Window {
                     // placa do menu
                     Item {
                         id: pill
-                        width: (win.vidro ? 480 : 420) * win.u; height: win.vidro ? 67 * win.u : width * 318 / 2031
+                        width: (win.vidro ? 480 : 420) * win.mu; height: win.vidro ? 67 * win.mu : width * 318 / 2031
                         readonly property real ph: height
                         readonly property real body: win.vidro ? 0.5 : 0.59                 // centro do corpo da placa
-                        x: ent.bs + (win.vidro ? 18 : 62) * win.u
+                        x: ent.bs + (win.vidro ? 18 : 62) * win.mu
                         y: ent.bs / 2 - height * body
                         transformOrigin: Item.Left
                         scale: ent.active ? 1.08 : 1.0
                         Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
-                        transform: Translate { x: ent.active ? 14 * win.u : 0; Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } } }
+                        transform: Translate { x: ent.active ? 14 * win.mu : 0; Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } } }
                         layer.enabled: ent.active
                         layer.effect: MultiEffect { brightness: 0.15; shadowEnabled: true; shadowColor: win.pal.accent; shadowBlur: 1.0; shadowHorizontalOffset: 0; shadowVerticalOffset: 0; shadowOpacity: 0.7 }
                         Tinted {
@@ -355,7 +371,7 @@ Window {
                             x: win.vidro ? pill.height * 0.7 : pill.width * 0.1
                             text: ent.modelData.label + (ent.modelData.items ? "  >" : "")
                             color: ent.active ? (win.vidro ? "white" : "#1a2600") : win.pal.bright
-                            font.family: win.fam; font.pixelSize: 25 * win.u; font.bold: true; font.letterSpacing: 3 * win.u
+                            font.family: win.fam; font.pixelSize: 25 * win.mu; font.bold: true; font.letterSpacing: 3 * win.mu
                         }
                     }
 
@@ -374,6 +390,7 @@ Window {
 
         // ================= dicas de botoes (A / B)
         Row {
+            visible: !deskMode
             anchors.right: parent.right; anchors.rightMargin: 90 * win.u
             anchors.bottom: parent.bottom; anchors.bottomMargin: 40 * win.u + parent.bottomReserve
             spacing: 50 * win.u

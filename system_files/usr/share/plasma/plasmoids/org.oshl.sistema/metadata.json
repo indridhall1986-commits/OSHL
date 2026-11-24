@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "OSHL" }],
+        "Category": "System Information",
+        "Description": "Uso de CPU, GPU, RAM, disco, rede e temperatura",
+        "Icon": "utilities-system-monitor",
+        "Id": "org.oshl.sistema",
+        "License": "GPL-2.0+",
+        "Name": "Sistema OSHL",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
