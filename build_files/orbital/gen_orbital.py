@@ -179,7 +179,72 @@ def tone(name, parts, rate=44100):
     print("gerado", name)
 
 
-if __name__ == "__main__":
+# ------------------------------------------------------------------ sons ASMR (suaves, organicos)
+def write_wav(name, samples, rate=44100):
+    peak = max(1e-9, max(abs(s) for s in samples))
+    with wave.open(os.path.join(OUT, name), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(b"".join(struct.pack("<h", int(s / peak * 0.55 * 32767)) for s in samples))
+    print("gerado", name)
+
+
+def glass_tink(dur=0.42, f0=2350.0, rate=44100, seed=7):
+    """'Tink' de vidro: parciais inarmonicos com decaimento exponencial + sopro de ar filtrado."""
+    import random
+    rnd = random.Random(seed)
+    n = int(rate * dur)
+    parts = [(1.0, 1.0, 9.0), (2.76, 0.35, 14.0), (5.40, 0.12, 22.0), (0.5, 0.18, 6.0)]
+    out, lp = [], 0.0
+    for i in range(n):
+        t = i / rate
+        att = min(1.0, t / 0.006)
+        s = sum(a * math.exp(-d * t) * math.sin(2 * math.pi * f0 * m * t) for m, a, d in parts)
+        lp += 0.08 * (rnd.uniform(-1, 1) - lp)              # ruido filtrado (ar)
+        air = lp * math.exp(-t / 0.05) * 0.5
+        out.append((s + air) * att)
+    return out
+
+
+def bubble_pop(dur=0.26, f_start=320.0, f_end=760.0, rate=44100):
+    """'Bloop' de bolha: seno com glissando rapido e envelope macio."""
+    n = int(rate * dur)
+    out, ph = [], 0.0
+    for i in range(n):
+        t = i / rate
+        k = t / dur
+        f = f_start + (f_end - f_start) * (1 - math.exp(-6 * k))
+        ph += 2 * math.pi * f / rate
+        env = min(1.0, t / 0.012) * math.exp(-t / (dur * 0.35))
+        out.append((math.sin(ph) + 0.15 * math.sin(2 * ph)) * env)
+    return out
+
+
+def shimmer(dur=1.8, rate=44100):
+    """Brilho cristalino: acorde suave que cresce e se dissipa, com cintilacao."""
+    n = int(rate * dur)
+    notes = [523.25, 659.25, 783.99, 1046.5, 1318.5]
+    out = []
+    for i in range(n):
+        t = i / rate
+        env = (1 - math.exp(-t / 0.35)) * math.exp(-t / 0.9)
+        s = 0.0
+        for j, f in enumerate(notes):
+            trem = 0.75 + 0.25 * math.sin(2 * math.pi * (3.0 + j * 0.7) * t + j)
+            s += math.sin(2 * math.pi * f * t) * trem / (1 + j * 0.6)
+        out.append(s * env)
+    return out
+
+
+SONS_SO = "--sons" in __import__("sys").argv
+
+if __name__ == "__main__" and SONS_SO:
+    write_wav("move.wav", [s * 0.55 for s in glass_tink()])
+    write_wav("select.wav", bubble_pop() + [s * 0.4 for s in glass_tink(0.3, 3100.0, seed=3)])
+    write_wav("back.wav", bubble_pop(0.24, 700.0, 300.0))
+    write_wav("open.wav", shimmer())
+elif __name__ == "__main__":
     grid("grid-a.png")
     grid("grid-b.png", nlon=16, nlat=8, width=2.2, alpha=55, ax=-0.4, ay=-0.6, focal=0.34)
     glass(1024).save(os.path.join(OUT, "core.png")); print("gerado core.png")
@@ -187,7 +252,7 @@ if __name__ == "__main__":
     bubble(256).save(os.path.join(OUT, "bubble.png")); print("gerado bubble.png")
     rings(1024).save(os.path.join(OUT, "rings.png")); print("gerado rings.png")
     background().save(os.path.join(OUT, "bg.png")); print("gerado bg.png")
-    tone("move.wav", [(880, 1180, 0.05, 0.35)])
-    tone("select.wav", [(660, 990, 0.07, 0.45), (990, 1480, 0.12, 0.4)])
-    tone("back.wav", [(990, 520, 0.12, 0.4)])
-    tone("open.wav", [(220, 440, 0.5, 0.35), (440, 660, 0.45, 0.3), (660, 880, 0.6, 0.25)])
+    write_wav("move.wav", [s * 0.55 for s in glass_tink()])
+    write_wav("select.wav", bubble_pop() + [s * 0.4 for s in glass_tink(0.3, 3100.0, seed=3)])
+    write_wav("back.wav", bubble_pop(0.24, 700.0, 300.0))
+    write_wav("open.wav", shimmer())
