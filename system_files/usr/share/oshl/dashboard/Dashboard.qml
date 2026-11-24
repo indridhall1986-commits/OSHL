@@ -20,6 +20,8 @@ Window {
     readonly property var menus: backend.menus
     property int level: 0
     property int cur: 0
+    property real scroll: cur                        // posicao animada da "roda" do menu
+    Behavior on scroll { NumberAnimation { duration: 380; easing.type: Easing.OutCubic } }
     property int parentIdx: 0
     readonly property var model: level === 0 ? menus : (menus[parentIdx].items || [])
     readonly property real coreSize: height * 0.50
@@ -31,7 +33,9 @@ Window {
 
     function move(d) {
         if (!model.length) return
-        cur = (cur + d + model.length) % model.length
+        var n = Math.max(0, Math.min(model.length - 1, cur + d))
+        if (n === cur) return
+        cur = n
         backend.sound("move")
     }
     function activate() {
@@ -204,8 +208,6 @@ Window {
                 Image {
                     id: coreImg
                     anchors.fill: parent; source: backend.asset("core.png"); fillMode: Image.PreserveAspectFit
-                    rotation: win.cur * 72 + win.level * 180  // a esfera gira junto com o menu
-                    Behavior on rotation { NumberAnimation { duration: 450; easing.type: Easing.OutBack } }
                     SequentialAnimation on scale {
                         loops: Animation.Infinite; running: !previewMode
                         NumberAnimation { to: 1.035; duration: 1800; easing.type: Easing.InOutSine }
@@ -292,7 +294,9 @@ Window {
                     required property int index
                     readonly property bool active: index === win.cur
                     readonly property int n: rep.count
-                    readonly property real ang: n <= 1 ? 0 : (-0.60 + 1.20 * index / (n - 1))
+                    readonly property real ang: -0.12 + (index - win.scroll) * 0.29   // foco um pouco acima do meio
+                    opacity: Math.max(0, 1 - Math.max(0, Math.abs(ang + 0.12) - 0.82) / 0.3)
+                    visible: opacity > 0.01
                     readonly property real rad: win.coreR * 1.42
                     property real bs: (active ? 88 : 70) * win.u
                     readonly property real bx: win.coreCx + rad * Math.cos(ang)
