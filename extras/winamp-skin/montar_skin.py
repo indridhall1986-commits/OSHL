@@ -164,20 +164,25 @@ def circle_crop(im, cx, cy, r):
 
 
 def key_mask(img):
-    """Formato real do botao dentro do recorte: preenche a partir de varios pontos com
-    cor parecida (balde de tinta), une as regioes e fecha os buracos dos icones."""
+    """Formato da TECLA PRINCIPAL do recorte: preenche a partir de pontos perto do centro
+    (cor parecida), fecha os icones e esmaece perto da borda do recorte (sem corte reto)."""
     rgb = img.convert("RGB")
     w, h = rgb.size
     total = Image.new("L", (w, h), 0)
-    for fx, fy in ((0.22, 0.5), (0.78, 0.5), (0.5, 0.22), (0.5, 0.8), (0.35, 0.35), (0.65, 0.65)):
+    for fx, fy in ((0.38, 0.5), (0.62, 0.5), (0.5, 0.3), (0.5, 0.72)):
         probe = rgb.copy()
-        ImageDraw.floodfill(probe, (int(w * fx), int(h * fy)), (255, 0, 255), thresh=48)
+        ImageDraw.floodfill(probe, (int(w * fx), int(h * fy)), (255, 0, 255), thresh=36)
         reg = Image.eval(ImageChops.difference(probe, rgb).convert("L"), lambda v: 255 if v else 0)
         area = sum(reg.histogram()[255:]) / float(w * h)
-        if 0.04 < area < 0.92:
+        if 0.04 < area < 0.9:
             total = ImageChops.lighter(total, reg)
     k = max(3, (min(w, h) // 12) | 1)
     total = total.filter(ImageFilter.MaxFilter(k)).filter(ImageFilter.MinFilter(k))   # fecha icones
+    inset = max(2, min(w, h) // 10)
+    fade = Image.new("L", (w, h), 0)
+    ImageDraw.Draw(fade).rounded_rectangle((inset, inset, w - 1 - inset, h - 1 - inset), radius=inset, fill=255)
+    fade = fade.filter(ImageFilter.GaussianBlur(inset * 0.8))                         # some perto da borda
+    total = ImageChops.multiply(total, fade)
     if img.mode == "RGBA":
         total = ImageChops.multiply(total, img.getchannel("A"))
     return total.filter(ImageFilter.GaussianBlur(1.2))
@@ -189,7 +194,7 @@ def states(img):
     m = key_mask(img)
     rgb = img.convert("RGB")
     out = [img]
-    for factor in (1.25, 0.72):
+    for factor in (1.16, 0.78):
         fx = ImageEnhance.Brightness(rgb).enhance(factor)
         v = Image.composite(fx, rgb, m).convert("RGBA")
         v.putalpha(img.getchannel("A"))

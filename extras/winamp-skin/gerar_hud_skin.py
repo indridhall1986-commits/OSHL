@@ -46,7 +46,7 @@ class Canvas:
         self.w, self.h = w, h
         self.m = K * SS
         self.im = Image.new("RGBA", (w * self.m, h * self.m), fill)
-        self.d = ImageDraw.Draw(self.im)
+        self.d = ImageDraw.Draw(self.im, "RGBA")   # mistura as cores (nao substitui o alfa)
 
     def p(self, *v):
         return [x * self.m for x in v]
