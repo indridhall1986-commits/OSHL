@@ -120,40 +120,36 @@ if __name__ == "__main__" and sys.argv[1:2] == ["debug"]:
 
 
 # ------------------------------------------------------------------ montagem
-def key_mask(img):
-    """Formato da TECLA PRINCIPAL do recorte: preenche a partir de pontos perto do centro
-    (cor parecida), fecha os icones e esmaece perto da borda do recorte (sem corte reto)."""
-    rgb = img.convert("RGB")
-    w, h = rgb.size
-    total = Image.new("L", (w, h), 0)
-    for fx, fy in ((0.38, 0.5), (0.62, 0.5), (0.5, 0.3), (0.5, 0.72)):
-        probe = rgb.copy()
-        ImageDraw.floodfill(probe, (int(w * fx), int(h * fy)), (255, 0, 255), thresh=36)
-        reg = Image.eval(ImageChops.difference(probe, rgb).convert("L"), lambda v: 255 if v else 0)
-        area = sum(reg.histogram()[255:]) / float(w * h)
-        if 0.04 < area < 0.9:
-            total = ImageChops.lighter(total, reg)
-    k = max(3, (min(w, h) // 12) | 1)
-    total = total.filter(ImageFilter.MaxFilter(k)).filter(ImageFilter.MinFilter(k))   # fecha icones
-    inset = max(2, min(w, h) // 10)
-    fade = Image.new("L", (w, h), 0)
-    ImageDraw.Draw(fade).rounded_rectangle((inset, inset, w - 1 - inset, h - 1 - inset), radius=inset, fill=255)
-    fade = fade.filter(ImageFilter.GaussianBlur(inset * 0.8))                         # some perto da borda
-    total = ImageChops.multiply(total, fade)
+def accent_mask(img):
+    """Partes COLORIDAS do botao (icone verde, vidro verde, LED): saturacao alta.
+    Nunca pega o prateado/branco da tecla, entao nao forma retangulo."""
+    hsv = img.convert("RGB").convert("HSV")
+    _h, s, v = hsv.split()
+    m = ImageChops.multiply(s.point(lambda x: 255 if x > 70 else 0), v.point(lambda x: 255 if x > 45 else 0))
+    m = m.filter(ImageFilter.MaxFilter(3)).filter(ImageFilter.GaussianBlur(1.2))
     if img.mode == "RGBA":
-        total = ImageChops.multiply(total, img.getchannel("A"))
-    return total.filter(ImageFilter.GaussianBlur(1.2))
+        m = ImageChops.multiply(m, img.getchannel("A"))
+    return m
 
 
 def states(img):
-    """normal = igual ao fundo; hover/down: brilho so DENTRO do formato do botao."""
+    """normal = igual ao fundo; hover = icone/partes coloridas acendem com brilho suave;
+    pressionado = partes coloridas escurecem."""
     img = img.convert("RGBA")
-    m = key_mask(img)
     rgb = img.convert("RGB")
+    m = accent_mask(img)
+    lit = ImageEnhance.Color(ImageEnhance.Brightness(rgb).enhance(1.45)).enhance(1.25)
+    hov = Image.composite(lit, rgb, m)
+    if m.getbbox():                                           # halo suave em volta do icone
+        avg = ImageChops.multiply(rgb, Image.merge("RGB", (m, m, m))).resize((1, 1), Image.BOX).getpixel((0, 0))
+        frac = max(1, sum(m.resize((1, 1), Image.BOX).getpixel((0, 0)) for _ in [0])) / 255.0
+        col = tuple(min(255, int(c / frac * 1.2)) for c in avg)
+        halo = m.filter(ImageFilter.GaussianBlur(max(2, min(img.size) // 14))).point(lambda x: int(x * 0.45))
+        hov = Image.composite(Image.new("RGB", rgb.size, col), hov, ImageChops.subtract(halo, m))
+    dwn = Image.composite(ImageEnhance.Brightness(rgb).enhance(0.7), rgb, m)
     out = [img]
-    for factor in (1.16, 0.78):
-        fx = ImageEnhance.Brightness(rgb).enhance(factor)
-        v = Image.composite(fx, rgb, m).convert("RGBA")
+    for v in (hov, dwn):
+        v = v.convert("RGBA")
         v.putalpha(img.getchannel("A"))
         out.append(v)
     return out
