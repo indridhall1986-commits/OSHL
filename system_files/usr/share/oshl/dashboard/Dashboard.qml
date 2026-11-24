@@ -106,6 +106,7 @@ Window {
     }
 
     Item {
+        id: dashRoot
         anchors.fill: parent
         focus: true
         Keys.onPressed: function (ev) {
@@ -223,7 +224,7 @@ Window {
             }
         }
         // ================= widgets organicos (relogio holografico, sistema, placa de video)
-        readonly property real bottomReserve: backend.windowMode ? 0 : 64 * win.u   // espaco da barra de tarefas
+        readonly property real bottomReserve: (backend.windowMode && simPath === "") ? 0 : 64 * win.u   // espaco da barra de tarefas
 
         HoloClock {
             visible: backend.widgets["clock"] !== false
@@ -386,5 +387,13 @@ Window {
                 }
             }
         }
+    }
+
+    // Simulador da area de trabalho (apenas em teste: OSHL_SIM_QML)
+    Loader {
+        anchors.fill: parent; z: 50
+        active: simPath !== ""
+        source: simPath
+        onLoaded: item.backdrop = dashRoot
     }
 }

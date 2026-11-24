@@ -296,6 +296,9 @@ def main():
     engine.rootContext().setContextProperty("backend", backend)
     engine.rootContext().setContextProperty("previewMode", bool(os.environ.get("OSHL_PREVIEW")))
     engine.rootContext().setContextProperty("previewPath", os.environ.get("OSHL_PREVIEW", ""))
+    sim = os.environ.get("OSHL_SIM_QML", "")
+    engine.rootContext().setContextProperty("simPath", QUrl.fromLocalFile(sim).toString() if sim else "")
+    engine.rootContext().setContextProperty("simIcons", QUrl.fromLocalFile(os.environ.get("OSHL_SIM_ICONS", "")).toString())
     engine.load(QUrl.fromLocalFile(os.path.join(HERE, "Dashboard.qml")))
     if not engine.rootObjects():
         sys.exit(1)
