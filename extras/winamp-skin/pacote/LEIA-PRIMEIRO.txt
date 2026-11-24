@@ -41,9 +41,10 @@ Trocar o skin (vale na proxima abertura do Winamp):
 
 ~/.local/bin/oshl-winamp-tema neon hud metade
 ~/.local/bin/oshl-winamp-tema neon plastic normal
+~/.local/bin/oshl-winamp-tema matrix bio metade
 
    Temas:   tron, matrix, reator, alerta, ambar, neon
-   Estilos: hud (visual do painel do OSHL) ou plastic (plastico translucido)
+   Estilos: hud (painel do OSHL), plastic (plastico translucido) ou bio (organico prateado)
    Tamanho: metade (menor, padrao) ou normal (dobro)
    Estilo e tamanho ficam salvos; depois basta: ~/.local/bin/oshl-winamp-tema neon
 

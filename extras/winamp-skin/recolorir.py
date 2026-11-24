@@ -5,12 +5,14 @@ e as cores dos botoes (laranja, vermelho, azul, preto).
 Saida: fonte/<tema>/*.png  +  fonte/previa-temas.png"""
 import glob
 import os
+import sys
 
 import numpy as np
 from PIL import Image, ImageDraw
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SRC = os.path.join(HERE, "fonte", "original")
+FONTE = os.path.join(HERE, sys.argv[1] if len(sys.argv) > 1 else "fonte")   # ex.: fonte-bio
+SRC = os.path.join(FONTE, "original")
 
 # tema: (matiz alvo em graus, fator de saturacao) - None = manter o original
 THEMES = {
@@ -55,7 +57,7 @@ def recolor(img, target, sat):
 files = sorted(glob.glob(os.path.join(SRC, "*.png")))
 previews = {}
 for theme, cfg in THEMES.items():
-    dst = os.path.join(HERE, "fonte", theme)
+    dst = os.path.join(FONTE, theme)
     os.makedirs(dst, exist_ok=True)
     for f in files:
         im = Image.open(f)
@@ -73,5 +75,5 @@ for i, (theme, im) in enumerate(previews.items()):
     x, y = (i % 3) * tw, (i // 3) * (th + 30)
     sheet.paste(im.convert("RGB").resize((tw, th)), (x, y + 30))
     d.text((x + 10, y + 8), theme.upper(), fill=(255, 255, 255))
-sheet.save(os.path.join(HERE, "fonte", "previa-temas.png"))
-print("previa:", os.path.join(HERE, "fonte", "previa-temas.png"))
+sheet.save(os.path.join(FONTE, "previa-temas.png"))
+print("previa:", os.path.join(FONTE, "previa-temas.png"))
