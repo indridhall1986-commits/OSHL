@@ -22,8 +22,8 @@ Window {
     property int cur: 0
     property int parentIdx: 0
     readonly property var model: level === 0 ? menus : (menus[parentIdx].items || [])
-    readonly property real coreSize: height * 0.62
-    readonly property real coreR: coreSize * 0.30
+    readonly property real coreSize: height * 0.50
+    readonly property real coreR: coreSize * 0.49
     readonly property real coreCx: width * 0.30
     readonly property real coreCy: height * 0.52
 
@@ -91,24 +91,22 @@ Window {
             layer.enabled: win.pal.tint
             layer.effect: MultiEffect { colorization: 1.0; colorizationColor: win.pal.accent }
 
-            Image { anchors.fill: parent; source: backend.asset("bg.png"); fillMode: Image.PreserveAspectCrop }
-
-            Image {
-                readonly property real d: Math.hypot(win.width, win.height) * 1.05
-                width: d; height: d
-                x: win.coreCx - d / 2; y: win.coreCy - d / 2
-                source: backend.asset("grid-a.png")
-                opacity: 0.9
-                RotationAnimator on rotation { from: 0; to: 360; duration: 260000; loops: Animation.Infinite; running: !previewMode }
+            Image {                          // malha (arte gerada) com movimento lento de "respiracao"
+                anchors.centerIn: parent
+                width: parent.width * 1.12; height: parent.height * 1.12
+                source: backend.asset("bg.jpg"); fillMode: Image.PreserveAspectCrop
+                SequentialAnimation on scale {
+                    loops: Animation.Infinite; running: !previewMode
+                    NumberAnimation { to: 1.06; duration: 14000; easing.type: Easing.InOutSine }
+                    NumberAnimation { to: 1.0; duration: 14000; easing.type: Easing.InOutSine }
+                }
+                SequentialAnimation on rotation {
+                    loops: Animation.Infinite; running: !previewMode
+                    NumberAnimation { to: 2.5; duration: 22000; easing.type: Easing.InOutSine }
+                    NumberAnimation { to: -2.5; duration: 22000; easing.type: Easing.InOutSine }
+                }
             }
-            Image {
-                readonly property real d: Math.hypot(win.width, win.height) * 1.35
-                width: d; height: d
-                x: win.coreCx - d / 2; y: win.coreCy - d / 2
-                source: backend.asset("grid-b.png")
-                opacity: 0.8
-                RotationAnimator on rotation { from: 360; to: 0; duration: 420000; loops: Animation.Infinite; running: !previewMode }
-            }
+            Rectangle { anchors.fill: parent; color: "black"; opacity: 0.38 }   // escurece o fundo
 
             Item {
                 id: coreItem
@@ -122,22 +120,22 @@ Window {
                     NumberAnimation { target: coreItem; property: "scale"; to: 1.0; duration: previewMode ? 1 : 900; easing.type: Easing.OutBack }
                     NumberAnimation { target: coreItem; property: "opacity"; to: 1.0; duration: previewMode ? 1 : 700 }
                 }
-                Image {
-                    anchors.fill: parent; source: backend.asset("rings.png")
-                    RotationAnimator on rotation { from: 0; to: 360; duration: 40000; loops: Animation.Infinite; running: !previewMode }
-                }
-                Image {                      // fitas de energia girando dentro do vidro
-                    anchors.fill: parent; source: backend.asset("swirl.png")
-                    RotationAnimator on rotation { from: 0; to: 360; duration: 14000; loops: Animation.Infinite; running: !previewMode }
-                }
-                Image {
-                    anchors.fill: parent; anchors.margins: win.coreSize * 0.12; source: backend.asset("swirl.png")
-                    opacity: 0.7; rotation: 60
-                    RotationAnimator on rotation { from: 420; to: 60; duration: 9000; loops: Animation.Infinite; running: !previewMode }
+                Image {                      // brilho pulsando atras do vidro
+                    anchors.centerIn: parent
+                    width: parent.width * 1.12; height: parent.height * 1.12
+                    source: backend.asset("core.png")
+                    layer.enabled: true
+                    layer.effect: MultiEffect { blurEnabled: true; blur: 1.0; blurMax: 64; brightness: 0.25 }
+                    SequentialAnimation on opacity {
+                        loops: Animation.Infinite; running: !previewMode
+                        NumberAnimation { from: 0.15; to: 0.42; duration: 1800; easing.type: Easing.InOutSine }
+                        NumberAnimation { from: 0.42; to: 0.15; duration: 1800; easing.type: Easing.InOutSine }
+                    }
+                    opacity: 0.3
                 }
                 Image {
                     id: coreImg
-                    anchors.fill: parent; source: backend.asset("core.png")
+                    anchors.fill: parent; source: backend.asset("core.png"); fillMode: Image.PreserveAspectFit
                     SequentialAnimation on scale {
                         loops: Animation.Infinite; running: !previewMode
                         NumberAnimation { to: 1.035; duration: 1800; easing.type: Easing.InOutSine }
@@ -196,7 +194,7 @@ Window {
                     readonly property bool active: index === win.cur
                     readonly property int n: rep.count
                     readonly property real ang: n <= 1 ? 0 : (-0.60 + 1.20 * index / (n - 1))
-                    readonly property real rad: win.coreR * 1.95
+                    readonly property real rad: win.coreR * 1.42
                     property real bs: (active ? 88 : 70) * win.u
                     readonly property real bx: win.coreCx + rad * Math.cos(ang)
                     readonly property real by: win.coreCy + rad * Math.sin(ang)
@@ -234,36 +232,23 @@ Window {
                     // capsula com ponta cortada
                     Item {
                         id: pill
-                        readonly property real ph: 58 * win.u
+                        readonly property real ph: 67 * win.u
                         width: 560 * win.u; height: ph
                         x: ent.bs + 18 * win.u
                         y: (ent.bs - ph) / 2
                         layer.enabled: ent.active
-                        layer.effect: MultiEffect { shadowEnabled: true; shadowColor: win.pal.accent; shadowBlur: 0.9; shadowHorizontalOffset: 0; shadowVerticalOffset: 0; shadowScale: 1.04 }
-                        Shape {
+                        layer.effect: MultiEffect { brightness: 0.15; shadowEnabled: true; shadowColor: win.pal.accent; shadowBlur: 1.0; shadowHorizontalOffset: 0; shadowVerticalOffset: 0; shadowOpacity: 0.7 }
+                        Image {
                             anchors.fill: parent
-                            preferredRendererType: Shape.CurveRenderer
-                            ShapePath {
-                                strokeColor: win.al(win.pal.accent, ent.active ? 1.0 : 0.75)
-                                strokeWidth: 2 * win.u
-                                fillGradient: LinearGradient {
-                                    x1: 0; y1: 0; x2: 0; y2: pill.ph
-                                    GradientStop { position: 0; color: ent.active ? win.al(win.pal.bright, 0.92) : win.al(win.pal.accent, 0.20) }
-                                    GradientStop { position: 0.5; color: ent.active ? win.al(win.pal.accent, 0.85) : win.al(win.pal.accent, 0.07) }
-                                    GradientStop { position: 1; color: ent.active ? win.al(win.pal.accent, 0.7) : win.al(win.pal.dim, 0.30) }
-                                }
-                                startX: pill.ph / 2; startY: 0
-                                PathLine { x: pill.width - pill.ph * 0.8; y: 0 }
-                                PathLine { x: pill.width; y: pill.ph }
-                                PathLine { x: pill.ph / 2; y: pill.ph }
-                                PathArc { x: pill.ph / 2; y: 0; radiusX: pill.ph / 2; radiusY: pill.ph / 2; direction: PathArc.Clockwise }
-                            }
+                            source: backend.asset("pill.png")
+                            opacity: ent.active ? 1.0 : 0.5
+                            Behavior on opacity { NumberAnimation { duration: 150 } }
                         }
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
                             x: pill.ph * 0.7
                             text: ent.modelData.label + (ent.modelData.items ? "  >" : "")
-                            color: ent.active ? win.pal.bg : win.pal.bright
+                            color: ent.active ? "white" : win.al(win.pal.bright, 0.8)
                             font.family: win.fam; font.pixelSize: 28 * win.u; font.bold: true; font.letterSpacing: 3 * win.u
                         }
                     }
@@ -289,14 +274,14 @@ Window {
                         { k: "A", t: "SELECIONAR", f: function () { win.activate() } }]
                 Row {
                     required property var modelData
-                    spacing: 14 * win.u
+                    spacing: 22 * win.u
                     Item {
                         width: 54 * win.u; height: 54 * win.u
-                        Image { anchors.fill: parent; anchors.margins: -12 * win.u; source: backend.asset("bubble.png") }
+                        Image { anchors.fill: parent; anchors.margins: -4 * win.u; source: backend.asset("bubble.png") }
                         Text {
                             anchors.centerIn: parent
                             text: modelData.k
-                            color: win.pal.bg
+                            color: "white"
                             font.family: win.fam; font.pixelSize: 26 * win.u; font.bold: true
                         }
                         MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: modelData.f() }
