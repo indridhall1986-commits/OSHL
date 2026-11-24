@@ -60,14 +60,14 @@ EQ = {
     },
 }
 PLAYLIST = {
-    "list": (132, 136, 1690, 688),
+    "list": (82, 124, 1692, 686),              # abertura preta da moldura (a lista do Winamp entra aqui)
     "buttons": {
-        "add":     ((404, 738, 622, 818), "eject", "", "Abrir arquivos"),
-        "dir":     ((792, 738, 984, 818), "eject_dir", "", "Abrir pasta"),
-        "shuffle": ((970, 738, 1172, 818), "toggle_shuffle", "", "Aleatorio"),
-        "repeat":  ((1150, 738, 1360, 818), "toggle_repeat", "", "Repetir"),
-        "min":     ((1518, 36, 1626, 88), "MINIMIZE", "", "Minimizar"),
-        "close":   ((1626, 36, 1724, 88), "CLOSE", "", "Fechar"),
+        "add":     ((392, 733, 612, 823), "eject", "", "Abrir arquivos"),
+        "dir":     ((786, 733, 992, 823), "eject_dir", "", "Abrir pasta"),
+        "shuffle": ((966, 733, 1172, 823), "toggle_shuffle", "", "Aleatorio"),
+        "repeat":  ((1146, 733, 1368, 823), "toggle_repeat", "", "Repetir"),
+        "min":     ((1532, 30, 1636, 94), "MINIMIZE", "", "Minimizar"),
+        "close":   ((1630, 30, 1738, 94), "CLOSE", "", "Fechar"),
     },
 }
 
