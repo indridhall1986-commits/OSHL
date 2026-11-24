@@ -1,0 +1,103 @@
+=====================================================================
+ WINAMP NO OSHL - TODOS OS COMANDOS
+ (cole no terminal: Ctrl+Shift+V | um bloco de cada vez)
+=====================================================================
+
+---------------------------------------------------------------------
+ 1. INSTALAR TUDO (Winamp + skins + player padrao + tema)
+---------------------------------------------------------------------
+Abra esta pasta no gerenciador de arquivos, aperte Shift+F4 e cole:
+
+bash instalar.sh
+
+(Se o instalador do Winamp abrir: Avancar/Next ate o fim.)
+Espere aparecer "PRONTO!".
+
+
+---------------------------------------------------------------------
+ 2. TORNAR O WINAMP O PLAYER PADRAO (se precisar refazer)
+---------------------------------------------------------------------
+O instalar.sh ja faz isso. Para refazer manualmente, cole:
+
+for m in audio/mpeg audio/mp4 audio/x-m4a audio/aac audio/flac audio/x-flac audio/ogg audio/x-vorbis+ogg audio/opus audio/x-wav audio/wav audio/x-ms-wma audio/x-mpegurl; do xdg-mime default winamp.desktop "$m"; done
+
+Conferir qual e o player padrao de MP3 (deve responder winamp.desktop):
+
+xdg-mime query default audio/mpeg
+
+
+---------------------------------------------------------------------
+ 3. VOLTAR PARA O PLAYER DO OSHL (Musica OSHL)
+---------------------------------------------------------------------
+for m in audio/mpeg audio/mp4 audio/x-m4a audio/aac audio/flac audio/x-flac audio/ogg audio/x-vorbis+ogg audio/opus audio/x-wav audio/wav audio/x-ms-wma audio/x-mpegurl; do xdg-mime default org.strawberrymusicplayer.strawberry.desktop "$m"; done
+
+
+---------------------------------------------------------------------
+ 4. TROCAR O SKIN DO WINAMP (vale na proxima vez que ele abrir)
+---------------------------------------------------------------------
+Skin do tema atual do OSHL:
+
+oshl-winamp-tema
+
+Skin de um tema especifico (escolha um):
+
+oshl-winamp-tema tron
+oshl-winamp-tema matrix
+oshl-winamp-tema reator
+oshl-winamp-tema alerta
+oshl-winamp-tema ambar
+oshl-winamp-tema neon
+
+Se aparecer "command not found", use o caminho completo:
+
+~/.local/bin/oshl-winamp-tema neon
+
+Skins de Xbox (dos fas): abra o Winamp e escolha em
+Opcoes (Options) > Skins, ou arraste o arquivo .wal/.wsz para a janela.
+
+
+---------------------------------------------------------------------
+ 5. ABRIR O WINAMP
+---------------------------------------------------------------------
+Pelo menu Iniciar: "Winamp"
+Ou dois cliques em qualquer musica.
+Pelo terminal (com ou sem musica):
+
+~/.local/bin/winamp
+~/.local/bin/winamp ~/Musicas/arquivo.mp3
+
+
+---------------------------------------------------------------------
+ 6. SE O WINAMP TRAVAR OU NAO ABRIR
+---------------------------------------------------------------------
+Fechar tudo que roda pelo Wine:
+
+wineserver -k
+
+Depois abra o Winamp de novo.
+
+
+---------------------------------------------------------------------
+ 7. REINSTALAR SO OS SKINS (depois de receber skins novos)
+---------------------------------------------------------------------
+Na pasta do pacote (Shift+F4), cole:
+
+cp -f Skins/*.wal Skins/*.wsz "$(winepath -u 'C:\Program Files (x86)\Winamp')/Skins/"
+
+
+---------------------------------------------------------------------
+ 8. DESINSTALAR O WINAMP
+---------------------------------------------------------------------
+wine "$(winepath -u 'C:\Program Files (x86)\Winamp')/UninstWA.exe"
+rm -f ~/.local/bin/winamp ~/.local/bin/oshl-winamp-tema ~/.local/share/applications/winamp.desktop
+
+(Depois rode o bloco 3 para voltar ao player do OSHL.)
+
+=====================================================================
+ Dicas
+ - Botoes da playlist: + abrir arquivos | check abrir pasta |
+   setas aleatorio | linhas repetir | - decorativo (use a tecla Delete)
+ - Para ADICIONAR musicas sem apagar a lista: arraste os arquivos
+   para dentro da playlist.
+ - Direcional (esquerda) abre a playlist; analogico (direita) abre o EQ.
+=====================================================================
