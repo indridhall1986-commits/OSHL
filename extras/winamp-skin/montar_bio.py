@@ -17,7 +17,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SRC_ROOT = os.path.join(HERE, "fonte-bio")
 METADE = "--metade" in sys.argv
 SUFIXO = "-50" if METADE else ""
-ALPHA = 0.94   # leve transparencia geral
+ALPHA = 1.0    # opaco (a transparencia fica por conta da opcao do Winamp)
 
 # escala por modulo (normal / metade): o player e o EQ tem 1376 px, a playlist 1774 px
 SCALES = {"player": 0.5, "equalizador": 0.5, "playlist": 0.39}
@@ -37,7 +37,7 @@ PLAYER = {
         "stop":  ((553, 600, 668, 668), "STOP", "", "Parar"),
         "next":  ((660, 585, 785, 648), "NEXT", "", "Proxima"),
         "eject": ((452, 552, 505, 592), "EJECT", "", "Abrir arquivo"),
-        "pl":    ((200, 318, 375, 488), "TOGGLE", "guid:pl", "Playlist"),
+        "pl":    ((200, 318, 375, 488), "TOGGLE", "guid:{45F3F7C1-A6F3-4ee6-A15E-125E92FC3F8D}", "Playlist"),
         "eq":    ((406, 496, 444, 534), "TOGGLE", "eq", "Equalizador"),
         "min":   ((640, 52, 718, 102), "MINIMIZE", "", "Minimizar"),
         "close": ((800, 50, 880, 102), "CLOSE", "", "Fechar"),
@@ -53,7 +53,7 @@ EQ = {
         "power": ((1183, 286, 1336, 342), "eq_toggle", "", "Liga/desliga EQ"),
         "auto":  ((298, 632, 462, 706), "eq_auto", "", "Auto"),
         "reset": ((462, 632, 616, 706), "eq_reset", "", "Zerar"),
-        "pl":    ((926, 632, 1086, 706), "TOGGLE", "guid:pl", "Playlist"),
+        "pl":    ((926, 632, 1086, 706), "TOGGLE", "guid:{45F3F7C1-A6F3-4ee6-A15E-125E92FC3F8D}", "Playlist"),
         "min":   ((1138, 40, 1226, 92), "MINIMIZE", "", "Minimizar"),
         "close": ((1228, 40, 1322, 92), "CLOSE", "", "Fechar"),
     },
@@ -314,10 +314,10 @@ def build(theme):
     im, mask = load("playlist")
     bg, off, W, H = finish_bg("pl.bg", im, mask, sc)
     lx0, ly0, lx1, ly1 = PLAYLIST["list"]
-    sections.append(f'''  <container id="pl" name="Playlist" component="guid:pl" default_x="{round(1376 * SCALES['player']) + 60}" default_y="40" default_visible="1">
+    sections.append(f'''  <container id="Pledit" name="Playlist Editor" dynamic="1" component="guid:{45F3F7C1-A6F3-4ee6-A15E-125E92FC3F8D}" default_x="{round(1376 * SCALES['player']) + 60}" default_y="40" default_visible="1">
     <layout id="normal" desktopalpha="1" w="{W}" h="{H}">
       <layer id="pl.bg" x="0" y="0" image="{bg}" move="1"/>
-      <PlaylistEditor id="pl.list" x="{R(lx0, off[0], sc)}" y="{R(ly0, off[1], sc)}" w="{round((lx1 - lx0) * sc)}" h="{round((ly1 - ly0) * sc)}"/>
+      <component id="pl.list" x="{R(lx0, off[0], sc)}" y="{R(ly0, off[1], sc)}" w="{round((lx1 - lx0) * sc)}" h="{round((ly1 - ly0) * sc)}" noshowcmdbar="1" autoopen="1" autoclose="1" param="guid:{45F3F7C1-A6F3-4ee6-A15E-125E92FC3F8D}"/>
 {chr(10).join(buttons_xml("pl", PLAYLIST, im, mask, off, sc))}
     </layout>
   </container>''')

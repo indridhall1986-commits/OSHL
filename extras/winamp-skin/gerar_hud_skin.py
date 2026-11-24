@@ -17,7 +17,7 @@ K = 1 if METADE else 2   # escala nativa (1 = metade, 2 = normal)
 SUFIXO = "-50" if METADE else ""
 MIN_PX = 7.5             # tamanho minimo de texto desenhado (legibilidade na versao metade)
 SS = 3         # supersampling para bordas lisas
-BG_ALPHA = 0.80
+BG_ALPHA = 1.0
 LIVE_FONT = "Fira Mono"   # fonte do texto ao vivo (instalada no OSHL)
 
 
@@ -234,7 +234,7 @@ def build(theme_key, themes):
         ("prev", "PREV", "Anterior", "prev"), ("play", "PLAY", "Tocar", "play"),
         ("pause", "PAUSE", "Pausar", "pause"), ("stop", "STOP", "Parar", "stop"),
         ("next", "NEXT", "Proxima", "next"), ("eject", "EJECT", "Abrir arquivo", "eject")])]
-    specs += [("pl", 262, 146, 40, 30, "TOGGLE", "guid:pl", "Playlist", None, "PL"),
+    specs += [("pl", 262, 146, 40, 30, "TOGGLE", "guid:{45F3F7C1-A6F3-4ee6-A15E-125E92FC3F8D}", "Playlist", None, "PL"),
               ("eq", 306, 146, 40, 30, "TOGGLE", "eq", "Equalizador", None, "EQ")]
     specs += winbtns("player", W)
     bands = []
@@ -297,10 +297,10 @@ def build(theme_key, themes):
     pl_specs += winbtns("pl", PW)
     c.text(450, 238, "DEL = REMOVER", 6.5, P["accent"] + (150,), anchor="ra")
     bg = save("pl.bg", c.out())
-    sections.append(f'''  <container id="pl" name="Playlist" component="guid:pl" default_x="{L(W) + 50}" default_y="40" default_visible="1">
+    sections.append(f'''  <container id="Pledit" name="Playlist Editor" dynamic="1" component="guid:{45F3F7C1-A6F3-4ee6-A15E-125E92FC3F8D}" default_x="{L(W) + 50}" default_y="40" default_visible="1">
     <layout id="normal" desktopalpha="1" w="{L(PW)}" h="{L(PH)}">
       <layer id="pl.bg" x="0" y="0" image="{bg}" move="1"/>
-      <PlaylistEditor id="pl.list" x="{L(13)}" y="{L(44)}" w="{L(434)}" h="{L(175)}"/>
+      <component id="pl.list" x="{L(13)}" y="{L(44)}" w="{L(434)}" h="{L(175)}" noshowcmdbar="1" autoopen="1" autoclose="1" param="guid:{45F3F7C1-A6F3-4ee6-A15E-125E92FC3F8D}"/>
 {chr(10).join(keys_xml("pl", pl_specs))}
     </layout>
   </container>''')

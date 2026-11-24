@@ -16,7 +16,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 METADE = "--metade" in sys.argv
 SCALE = 0.25 if METADE else 0.5   # 1774x887 -> 443x222 (metade) ou 887x444
 SUFIXO = "-50" if METADE else ""
-PANEL_ALPHA = 0.92    # leve transparencia do plastico
+PANEL_ALPHA = 1.0     # opaco (a transparencia fica por conta da opcao do Winamp)
 
 # ------------------------------------------------------------------ coordenadas (imagem original)
 PLAYER = {
@@ -30,7 +30,7 @@ PLAYER = {
         "stop":  ((909, 437, 1063, 557), "STOP", "", "Parar"),
         "next":  ((1092, 440, 1246, 556), "NEXT", "", "Proxima"),
         "eject": ((1271, 437, 1421, 557), "EJECT", "", "Abrir arquivo"),
-        "pl":    ((140, 420, 308, 580), "TOGGLE", "guid:pl", "Playlist"),
+        "pl":    ((140, 420, 308, 580), "TOGGLE", "guid:{45F3F7C1-A6F3-4ee6-A15E-125E92FC3F8D}", "Playlist"),
         "eq":    ((1455, 420, 1622, 580), "TOGGLE", "eq", "Equalizador"),
         "min":   ((1502, 46, 1573, 116), "MINIMIZE", "", "Minimizar"),
         "close": ((1589, 46, 1659, 116), "CLOSE", "", "Fechar"),
@@ -326,10 +326,10 @@ def build(theme):
     bg = save("pl.bg", scaled(panel_image(im, pnl)))
     W, H = s(pnl[2] - pnl[0]), s(pnl[3] - pnl[1])
     lx0, ly0, lx1, ly1 = rel(PLAYLIST["list"], pnl)
-    sections.append(f'''  <container id="pl" name="Playlist" component="guid:pl" default_x="{s(1774) + 40}" default_y="40" default_visible="1">
+    sections.append(f'''  <container id="Pledit" name="Playlist Editor" dynamic="1" component="guid:{45F3F7C1-A6F3-4ee6-A15E-125E92FC3F8D}" default_x="{s(1774) + 40}" default_y="40" default_visible="1">
     <layout id="normal" desktopalpha="1" w="{W}" h="{H}">
       <layer id="pl.bg" x="0" y="0" image="{bg}" move="1"/>
-      <PlaylistEditor id="pl.list" x="{lx0}" y="{ly0}" w="{lx1 - lx0}" h="{ly1 - ly0}"/>
+      <component id="pl.list" x="{lx0}" y="{ly0}" w="{lx1 - lx0}" h="{ly1 - ly0}" noshowcmdbar="1" autoopen="1" autoclose="1" param="guid:{45F3F7C1-A6F3-4ee6-A15E-125E92FC3F8D}"/>
 {chr(10).join(button_xml(PLAYLIST, im, "pl"))}
     </layout>
   </container>''')
