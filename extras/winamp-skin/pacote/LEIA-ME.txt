@@ -6,8 +6,8 @@ WINAMP + SKINS OSHL PLASTIC - INSTALACAO NO OSHL
 
    bash instalar.sh
 
-4. Se o Winamp ainda nao estiver instalado, o instalador abre:
-   clique em Avancar/Next ate o fim (pode deixar tudo no padrao).
+4. Nao precisa de internet: o Winamp 5.9.2 ja vem pronto na pasta Winamp.
+   Se o Wine pedir para baixar Mono/Gecko, clique em Cancelar.
 5. Espere aparecer "PRONTO!".
 
 Depois disso:

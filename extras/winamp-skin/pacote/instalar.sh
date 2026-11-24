@@ -21,11 +21,16 @@ find_winamp() {
 # 1. Winamp
 WA="$(find_winamp)"
 if [ -z "$WA" ]; then
-    say "[1/5] Instalando o Winamp (siga o instalador; pode deixar tudo no padrao)..."
-    INST="$(ls "$PKG"/winamp*.exe 2>/dev/null | head -n 1)"
-    [ -n "$INST" ] || fail "Instalador do Winamp (winamp*.exe) nao esta na pasta do pacote."
-    wine "$INST"
-    WA="$(find_winamp)" || fail "Winamp nao foi encontrado depois da instalacao."
+    [ -f "$PKG/Winamp/winamp.exe" ] || fail "Pasta Winamp (com winamp.exe) nao esta no pacote."
+    say "[1/5] Copiando o Winamp 5.9.2 para o Wine (sem internet)..."
+    echo "   (na primeira vez o Wine prepara o ambiente; se pedir para baixar Mono/Gecko, clique em Cancelar)"
+    wineboot -i >/dev/null 2>&1 || true
+    DEST="$(winepath -u 'C:\Program Files (x86)' 2>/dev/null)"
+    [ -d "$DEST" ] || DEST="$(winepath -u 'C:\Program Files' 2>/dev/null)"
+    [ -n "$DEST" ] || fail "Nao foi possivel localizar a pasta Program Files do Wine."
+    mkdir -p "$DEST"
+    cp -r "$PKG/Winamp" "$DEST/"
+    WA="$(find_winamp)" || fail "Winamp nao foi encontrado depois da copia."
 else
     say "[1/5] Winamp ja instalado em: $WA"
 fi

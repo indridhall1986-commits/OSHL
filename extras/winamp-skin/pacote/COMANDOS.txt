@@ -10,7 +10,8 @@ Abra esta pasta no gerenciador de arquivos, aperte Shift+F4 e cole:
 
 bash instalar.sh
 
-(Se o instalador do Winamp abrir: Avancar/Next ate o fim.)
+(Nao precisa de internet: o Winamp 5.9.2 vem pronto na pasta Winamp do pacote.
+ Na primeira vez o Wine prepara o ambiente; se pedir Mono/Gecko, clique em Cancelar.)
 Espere aparecer "PRONTO!".
 
 
@@ -88,7 +89,7 @@ cp -f Skins/*.wal Skins/*.wsz "$(winepath -u 'C:\Program Files (x86)\Winamp')/Sk
 ---------------------------------------------------------------------
  8. DESINSTALAR O WINAMP
 ---------------------------------------------------------------------
-wine "$(winepath -u 'C:\Program Files (x86)\Winamp')/UninstWA.exe"
+rm -rf "$(winepath -u 'C:\Program Files (x86)')/Winamp"
 rm -f ~/.local/bin/winamp ~/.local/bin/oshl-winamp-tema ~/.local/share/applications/winamp.desktop
 
 (Depois rode o bloco 3 para voltar ao player do OSHL.)
