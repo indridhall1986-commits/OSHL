@@ -13,7 +13,9 @@ import zipfile
 from PIL import Image, ImageDraw, ImageEnhance
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SCALE = 0.5           # 1774x887 -> 887x444 (nitido, sem "Double Size")
+METADE = "--metade" in sys.argv
+SCALE = 0.25 if METADE else 0.5   # 1774x887 -> 443x222 (metade) ou 887x444
+SUFIXO = "-50" if METADE else ""
 PANEL_ALPHA = 0.92    # leve transparencia do plastico
 
 # ------------------------------------------------------------------ coordenadas (imagem original)
@@ -206,7 +208,7 @@ def c(t):
 def build(theme):
     src = os.path.join(HERE, "fonte", theme)
     P = palette(theme)
-    skin = f"OSHL-Plastic-{P['name']}"
+    skin = f"OSHL-Plastic-{P['name']}{SUFIXO}"
     out_dir = os.path.join(HERE, "dist", skin)
     shutil.rmtree(out_dir, ignore_errors=True)
     img_dir = os.path.join(out_dir, "img")
@@ -306,10 +308,10 @@ def build(theme):
     bg = save("pl.bg", scaled(panel_image(im, pnl)))
     W, H = s(pnl[2] - pnl[0]), s(pnl[3] - pnl[1])
     lx0, ly0, lx1, ly1 = rel(PLAYLIST["list"], pnl)
-    sections.append(f'''  <container id="pl" name="Playlist" hold="guid:pl" default_x="{s(1774) + 40}" default_y="40" default_visible="1">
+    sections.append(f'''  <container id="pl" name="Playlist" component="guid:pl" default_x="{s(1774) + 40}" default_y="40" default_visible="1">
     <layout id="normal" desktopalpha="1" w="{W}" h="{H}">
       <layer id="pl.bg" x="0" y="0" image="{bg}" move="1"/>
-      <windowholder id="pl.list" hold="guid:pl" x="{lx0}" y="{ly0}" w="{lx1 - lx0}" h="{ly1 - ly0}"/>
+      <windowholder id="pl.list" hold="guid:pl" noshowcmdbar="1" autoopen="1" autoclose="1" autoavailable="1" x="{lx0}" y="{ly0}" w="{lx1 - lx0}" h="{ly1 - ly0}"/>
 {chr(10).join(button_xml(PLAYLIST, im, "pl"))}
     </layout>
   </container>''')
@@ -329,7 +331,7 @@ def build(theme):
 <WinampAbstractionLayer version="0.8">
   <skininfo>
     <version>1.0</version>
-    <name>OSHL Plastic {P['name']}</name>
+    <name>OSHL Plastic {P['name']}{SUFIXO}</name>
     <comment>Skin do OSHL - plastico translucido, tema {P['name']}.</comment>
     <author>OSHL</author>
     <email></email>
@@ -363,5 +365,5 @@ def build(theme):
 
 
 if __name__ == "__main__":
-    for th in (sys.argv[1:] or ["matrix"]):
+    for th in ([a for a in sys.argv[1:] if not a.startswith("--")] or ["matrix"]):
         build(th)

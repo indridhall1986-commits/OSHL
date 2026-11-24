@@ -96,15 +96,19 @@ say "[7/7] Ligando o skin aos temas do OSHL..."
 cat > "$HOME/.local/bin/oshl-winamp-tema" <<'EOF'
 #!/usr/bin/env bash
 # Define o skin do Winamp conforme o tema do OSHL (vale na proxima abertura do Winamp).
-# Uso: oshl-winamp-tema [tema] [hud|plastic]   (o estilo escolhido fica salvo)
+# Uso: oshl-winamp-tema [tema] [hud|plastic] [normal|metade]   (estilo e tamanho ficam salvos)
 CONF="${XDG_CONFIG_HOME:-$HOME/.config}/oshl"
 T="${1:-$(cat "$CONF/theme" 2>/dev/null || echo tron)}"
-case "${2:-}" in hud|plastic) mkdir -p "$CONF"; echo "$2" > "$CONF/winamp-estilo" ;; esac
+mkdir -p "$CONF"
+case "${2:-}" in hud|plastic) echo "$2" > "$CONF/winamp-estilo" ;; esac
+case "${3:-}" in normal|metade) echo "$3" > "$CONF/winamp-tamanho" ;; esac
 E="$(cat "$CONF/winamp-estilo" 2>/dev/null || echo hud)"
+Z="$(cat "$CONF/winamp-tamanho" 2>/dev/null || echo metade)"
 case "$T" in
     tron) S=TRON ;; matrix) S=MATRIZ ;; reator) S=REATOR ;;
     alerta) S=ALERTA ;; ambar) S=AMBAR ;; neon) S=NEON ;; *) S=MATRIZ ;;
 esac
+[ "$Z" = metade ] && S="$S-50"
 [ "$E" = plastic ] && PREFIX=OSHL-Plastic || PREFIX=OSHL-HUD
 P="$HOME/.local/share/oshl-winamp/prefix/drive_c"
 INI="$(find "$P" -iname winamp.ini -path '*Winamp*' 2>/dev/null | head -n 1)"

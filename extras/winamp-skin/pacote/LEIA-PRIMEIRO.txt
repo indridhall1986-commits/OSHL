@@ -39,12 +39,13 @@ bash atualizar-skins.sh
 ---------------------------------------------------------------------
 Trocar o skin (vale na proxima abertura do Winamp):
 
-~/.local/bin/oshl-winamp-tema neon hud
-~/.local/bin/oshl-winamp-tema neon plastic
+~/.local/bin/oshl-winamp-tema neon hud metade
+~/.local/bin/oshl-winamp-tema neon plastic normal
 
-   Temas: tron, matrix, reator, alerta, ambar, neon
+   Temas:   tron, matrix, reator, alerta, ambar, neon
    Estilos: hud (visual do painel do OSHL) ou plastic (plastico translucido)
-   O estilo escolhido fica salvo; depois basta: ~/.local/bin/oshl-winamp-tema neon
+   Tamanho: metade (menor, padrao) ou normal (dobro)
+   Estilo e tamanho ficam salvos; depois basta: ~/.local/bin/oshl-winamp-tema neon
 
 Conferir o player padrao (deve responder winamp.desktop;):
 

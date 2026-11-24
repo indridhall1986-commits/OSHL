@@ -12,7 +12,10 @@ import zipfile
 from PIL import Image, ImageDraw, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-K = 2          # escala nativa (coordenadas logicas x2)
+METADE = "--metade" in sys.argv
+K = 1 if METADE else 2   # escala nativa (1 = metade, 2 = normal)
+SUFIXO = "-50" if METADE else ""
+MIN_PX = 7.5             # tamanho minimo de texto desenhado (legibilidade na versao metade)
 SS = 3         # supersampling para bordas lisas
 BG_ALPHA = 0.80
 LIVE_FONT = "Fira Mono"   # fonte do texto ao vivo (instalada no OSHL)
@@ -58,6 +61,7 @@ class Canvas:
         self.d.polygon([(x * self.m, y * self.m) for x, y in pts], fill=fill)
 
     def text(self, x, y, s, size, color, anchor="la"):
+        size = max(size, MIN_PX / K)
         self.d.text((x * self.m, y * self.m), s, font=font(int(size * self.m)), fill=color, anchor=anchor)
 
     def out(self):
@@ -176,7 +180,7 @@ def build(theme_key, themes):
     t = themes[theme_key]
     P = {k: rgb(t[k]) for k in ("accent", "bright", "dim", "bg", "bg2")}
     NAME = t["name"]
-    skin = f"OSHL-HUD-{NAME}"
+    skin = f"OSHL-HUD-{NAME}{SUFIXO}"
     out_dir = os.path.join(HERE, "dist", skin)
     shutil.rmtree(out_dir, ignore_errors=True)
     img = os.path.join(out_dir, "img")
@@ -293,10 +297,10 @@ def build(theme_key, themes):
     pl_specs += winbtns("pl", PW)
     c.text(450, 238, "DEL = REMOVER", 6.5, P["accent"] + (150,), anchor="ra")
     bg = save("pl.bg", c.out())
-    sections.append(f'''  <container id="pl" name="Playlist" hold="guid:pl" default_x="{L(W) + 50}" default_y="40" default_visible="1">
+    sections.append(f'''  <container id="pl" name="Playlist" component="guid:pl" default_x="{L(W) + 50}" default_y="40" default_visible="1">
     <layout id="normal" desktopalpha="1" w="{L(PW)}" h="{L(PH)}">
       <layer id="pl.bg" x="0" y="0" image="{bg}" move="1"/>
-      <windowholder id="pl.list" hold="guid:pl" x="{L(13)}" y="{L(44)}" w="{L(434)}" h="{L(175)}"/>
+      <windowholder id="pl.list" hold="guid:pl" noshowcmdbar="1" autoopen="1" autoclose="1" autoavailable="1" x="{L(13)}" y="{L(44)}" w="{L(434)}" h="{L(175)}"/>
 {chr(10).join(keys_xml("pl", pl_specs))}
     </layout>
   </container>''')
@@ -313,7 +317,7 @@ def build(theme_key, themes):
 <WinampAbstractionLayer version="0.8">
   <skininfo>
     <version>1.0</version>
-    <name>OSHL HUD {NAME}</name>
+    <name>OSHL HUD {NAME}{SUFIXO}</name>
     <comment>Skin do OSHL no visual do painel HUD, tema {NAME}.</comment>
     <author>OSHL</author>
     <email></email>
@@ -362,7 +366,7 @@ def build(theme_key, themes):
     for i in range(7):
         pd.text((10 + L(18), L(H) + 20 + L(48 + i * 14)), f"{i + 1:02d}. ARTISTA {i + 1} - FAIXA {i + 1}", font=font(L(9)),
                 fill=P["bright"] if i == 2 else P["accent"])
-    prev.convert("RGB").save(os.path.join(HERE, "dist", f"previa-hud-{theme_key}.png"))
+    prev.convert("RGB").save(os.path.join(HERE, "dist", f"previa-hud-{theme_key}{SUFIXO}.png"))
     Image.open(os.path.join(img, "player.bg.png")).convert("RGB").save(os.path.join(out_dir, "screenshot.png"))
 
     wal = os.path.join(HERE, "dist", skin + ".wal")
@@ -377,5 +381,5 @@ def build(theme_key, themes):
 if __name__ == "__main__":
     with open(os.path.join(HERE, "..", "..", "build_files", "themes.json"), encoding="utf-8") as fh:
         THEMES = json.load(fh)
-    for th in (sys.argv[1:] or list(THEMES)):
+    for th in ([a for a in sys.argv[1:] if not a.startswith("--")] or list(THEMES)):
         build(th, THEMES)
