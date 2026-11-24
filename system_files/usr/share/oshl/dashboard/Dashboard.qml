@@ -191,21 +191,11 @@ Window {
                     source: backend.asset("m4/core.png")
                     layer.enabled: true
                     layer.effect: MultiEffect { blurEnabled: true; blur: 1.0; blurMax: 64; brightness: 0.25 }
-                    SequentialAnimation on opacity {
-                        loops: Animation.Infinite; running: !previewMode
-                        NumberAnimation { from: 0.15; to: 0.42; duration: 1800; easing.type: Easing.InOutSine }
-                        NumberAnimation { from: 0.42; to: 0.15; duration: 1800; easing.type: Easing.InOutSine }
-                    }
                     opacity: 0.3
                 }
                 Image {
                     id: coreImg
                     anchors.fill: parent; source: backend.asset("m4/core.png"); fillMode: Image.PreserveAspectFit
-                    SequentialAnimation on scale {
-                        loops: Animation.Infinite; running: !previewMode
-                        NumberAnimation { to: 1.035; duration: 1800; easing.type: Easing.InOutSine }
-                        NumberAnimation { to: 1.0; duration: 1800; easing.type: Easing.InOutSine }
-                    }
                 }
             }
         }
